@@ -1,10 +1,14 @@
 
 // ================= app.js =================
 
-const firebaseConfig={
-apiKey:"YOUR_API_KEY",
-authDomain:"YOUR_PROJECT.firebaseapp.com",
-projectId:"YOUR_PROJECT"
+const firebaseConfig = {
+  apiKey: "AIzaSyAaSH_-zEHnM_xdUaxc2UkuFuEU5K-qu-0",
+  authDomain: "siteguardian-a4905.firebaseapp.com",
+  projectId: "siteguardian-a4905",
+  storageBucket: "siteguardian-a4905.firebasestorage.app",
+  messagingSenderId: "335620604777",
+  appId: "1:335620604777:web:80feb62080089909dd33f8",
+  measurementId: "G-25GJQ6FBQN"
 };
 
 firebase.initializeApp(firebaseConfig);
