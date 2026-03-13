@@ -11,99 +11,149 @@ const firebaseConfig = {
   measurementId: "G-25GJQ6FBQN"
 };
 
+// ================= FIREBASE CONFIG =================
+
+
+
 firebase.initializeApp(firebaseConfig);
 
-const auth=firebase.auth();
-const db=firebase.firestore();
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-const loginBtn=document.getElementById("loginBtn");
-const profilePic=document.getElementById("profilePic");
-const testsLeftText=document.getElementById("testsLeft");
+const loginBtn = document.getElementById("loginBtn");
+const profilePic = document.getElementById("profilePic");
+const testsLeftText = document.getElementById("testsLeft");
 
-loginBtn.onclick=()=>{
 
-const provider=new firebase.auth.GoogleAuthProvider();
+// ================= LOGIN =================
+
+loginBtn.onclick = () => {
+
+const provider = new firebase.auth.GoogleAuthProvider();
 auth.signInWithPopup(provider);
 
 };
 
 
-auth.onAuthStateChanged(async user=>{
+// ================= USER STATE =================
 
-if(user){
+auth.onAuthStateChanged(async user => {
+
+if(!user) return;
 
 loginBtn.classList.add("hidden");
 
-profilePic.src=user.photoURL;
+profilePic.src = user.photoURL;
 profilePic.classList.remove("hidden");
 
-const ref=db.collection("users").doc(user.uid);
-
-const doc=await ref.get();
+const userRef = db.collection("users").doc(user.uid);
+const doc = await userRef.get();
 
 if(!doc.exists){
-await ref.set({tests:0});
+
+await userRef.set({
+plan:"free",
+credits:1,
+maxCredits:1,
+lastReset:Date.now()
+});
+
 }
 
-updateTests();
-
-}
+await checkCreditReset();
+updateCreditsDisplay();
 
 });
 
 
-async function updateTests(){
+// ================= CREDIT RESET =================
 
-const user=auth.currentUser;
-const ref=db.collection("users").doc(user.uid);
+async function checkCreditReset(){
 
-const data=(await ref.get()).data();
+const user = auth.currentUser;
+const userRef = db.collection("users").doc(user.uid);
 
-const freeLeft=1-data.tests;
+const doc = await userRef.get();
+const data = doc.data();
 
-if(freeLeft>0){
-testsLeftText.innerText=`Free tests left: ${freeLeft}`;
-}else{
-testsLeftText.innerText="No free tests left. Upgrade below.";
+const now = Date.now();
+const day = 1000 * 60 * 60 * 24;
+
+if(now - data.lastReset > day){
+
+await userRef.update({
+credits:data.maxCredits,
+lastReset:now
+});
+
 }
 
 }
 
 
+// ================= UPDATE UI =================
 
-document.getElementById("testBtn").onclick=async()=>{
+async function updateCreditsDisplay(){
 
-const url=document.getElementById("urlInput").value;
+const user = auth.currentUser;
+const doc = await db.collection("users").doc(user.uid).get();
+const data = doc.data();
 
-const user=auth.currentUser;
+testsLeftText.innerText = `Credits remaining today: ${data.credits}`;
+
+}
+
+
+// ================= RUN TEST =================
+
+document.getElementById("testBtn").onclick = async () => {
+
+const url = document.getElementById("urlInput").value;
+
+const user = auth.currentUser;
 
 if(!user){
 alert("Please sign in first");
 return;
 }
 
-const ref=db.collection("users").doc(user.uid);
+const userRef = db.collection("users").doc(user.uid);
+const doc = await userRef.get();
+const data = doc.data();
 
-const data=(await ref.get()).data();
+if(data.credits <= 0){
 
-if(data.tests>=1){
-alert("Free test used. Please upgrade.");
+alert("No credits left today. Upgrade your plan.");
+
 return;
+
 }
 
 
+// send test to Raspberry Pi
+
 await fetch("http://YOUR_PI_IP:5000/test",{
+
 method:"POST",
-headers:{"Content-Type":"application/json"},
+headers:{
+"Content-Type":"application/json"
+},
+
 body:JSON.stringify({url:url})
+
 });
 
 
-await ref.update({tests:data.tests+1});
+// remove credit
 
-updateTests();
+await userRef.update({
+credits:data.credits - 1
+});
 
 
-document.getElementById("result").innerText="AI agent started scanning your website...";
+updateCreditsDisplay();
+
+document.getElementById("result").innerText =
+"AI agent started scanning your website...";
 
 };
