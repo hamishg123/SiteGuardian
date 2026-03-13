@@ -1,4 +1,58 @@
 <!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SiteGuardian – Automated Website Testing</title>
+
+<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+</head>
+
+<body>
+
+<nav>
+<div class="logo">SiteGuardian</div>
+<button id="loginBtn" class="navbtn">Sign in with Google</button>
+</nav>
+
+<section class="hero">
+<h1>AI Website Monitoring</h1>
+<p>Automatically test your website for broken buttons, forms and errors using AI agents.</p>
+
+<div class="urlbox">
+<input id="urlInput" placeholder="https://yourwebsite.com">
+<button id="testBtn">Run Free Test</button>
+</div>
+
+<p id="result" class="result"></p>
+</section>
+
+<section class="features">
+
+<div class="feature">
+<h3>Automated Testing</h3>
+<p>AI agents browse your website like real users and detect broken features.</p>
+</div>
+
+<div class="feature">
+<h3>Screenshot Reports</h3>
+<p>Visual reports showing exactly where errors occur.</p>
+</div>
+
+<div class="feature">
+<h3>24/7 Monitoring</h3>
+<p>Your website is constantly checked for problems.</p>
+</div>
+
+<div class="feature">
+<h3>Instant Alerts</h3>
+<p>Get notified immediately when something breaks.</p>
 </div>
 
 </section>
@@ -55,3 +109,4 @@
 
 </body>
 </html>
+
