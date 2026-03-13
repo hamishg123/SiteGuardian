@@ -1,10 +1,10 @@
-<!-- index.html -->
+<!-- ================= index.html ================= -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SiteGuardian – Automated Website Testing</title>
+<title>SiteGuardian</title>
 
 <link rel="stylesheet" href="style.css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -16,97 +16,107 @@
 
 <body>
 
-<nav>
+<!-- NAVBAR -->
+<nav class="navbar">
 <div class="logo">SiteGuardian</div>
-<button id="loginBtn" class="navbtn">Sign in with Google</button>
+
+<div class="navRight">
+<button id="loginBtn" class="loginBtn">Sign in</button>
+<img id="profilePic" class="profilePic hidden" />
+</div>
 </nav>
 
+
+<!-- HERO -->
 <section class="hero">
 <h1>AI Website Monitoring</h1>
-<p>Automatically test your website for broken buttons, forms and errors using AI agents.</p>
+<p>Automatically test your website for broken buttons, forms and errors.</p>
 
-<div class="urlbox">
+<div class="testBox">
 <input id="urlInput" placeholder="https://yourwebsite.com">
 <button id="testBtn">Run Free Test</button>
 </div>
 
+<p id="testsLeft" class="testsLeft"></p>
 <p id="result" class="result"></p>
+
 </section>
 
+
+<!-- FEATURES -->
 <section class="features">
 
-<div class="feature">
-<h3>Automated Testing</h3>
-<p>AI agents browse your website like real users and detect broken features.</p>
+<div class="featureCard">
+<h3>AI Browser Testing</h3>
+<p>AI agents simulate real users and explore your site to find errors.</p>
 </div>
 
-<div class="feature">
-<h3>Screenshot Reports</h3>
-<p>Visual reports showing exactly where errors occur.</p>
+<div class="featureCard">
+<h3>Broken Button Detection</h3>
+<p>Automatically detect buttons and links that fail or lead to errors.</p>
 </div>
 
-<div class="feature">
+<div class="featureCard">
 <h3>24/7 Monitoring</h3>
-<p>Your website is constantly checked for problems.</p>
-</div>
-
-<div class="feature">
-<h3>Instant Alerts</h3>
-<p>Get notified immediately when something breaks.</p>
+<p>Your website is checked continuously to detect problems early.</p>
 </div>
 
 </section>
 
-<section class="dashboard" id="dashboard">
 
-<div class="card">
-<h2>Your Test History</h2>
-<div id="history"></div>
-</div>
-
-</section>
-
+<!-- PRICING -->
 <section class="pricing">
-
-<h1>Pricing</h1>
+<h2>Pricing</h2>
 <p class="pricingSub">Upgrade for continuous monitoring</p>
 
-<div class="planGrid">
+<div class="pricingGrid">
 
-<div class="plan">
+<div class="priceCard">
 <h3>Starter</h3>
-<h2>£15</h2>
-<p>1 Website</p>
-<p>Daily Tests</p>
-<button>Subscribe</button>
+<h1>£15</h1>
+<ul>
+<li>1 Website</li>
+<li>Daily Testing</li>
+<li>Email Alerts</li>
+</ul>
+<button>Get Started</button>
 </div>
 
-<div class="plan">
+<div class="priceCard featured">
 <h3>Pro</h3>
-<h2>£39</h2>
-<p>5 Websites</p>
-<p>Hourly Tests</p>
-<button>Subscribe</button>
+<h1>£39</h1>
+<ul>
+<li>5 Websites</li>
+<li>Hourly Testing</li>
+<li>Screenshot Reports</li>
+</ul>
+<button>Get Started</button>
 </div>
 
-<div class="plan">
+<div class="priceCard">
 <h3>Agency</h3>
-<h2>£99</h2>
-<p>20 Websites</p>
-<p>Realtime Monitoring</p>
-<button>Subscribe</button>
+<h1>£99</h1>
+<ul>
+<li>20 Websites</li>
+<li>Realtime Monitoring</li>
+<li>Priority Support</li>
+</ul>
+<button>Get Started</button>
 </div>
 
 </div>
 
 </section>
 
+
 <footer>
-© 2026 SiteGuardian – Automated Website Testing
+© 2026 SiteGuardian
 </footer>
 
 <script src="app.js"></script>
 
 </body>
 </html>
+
+
 
