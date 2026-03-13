@@ -1,4 +1,3 @@
-
 // ================= app.js =================
 
 const firebaseConfig = {
@@ -11,108 +10,164 @@ const firebaseConfig = {
   measurementId: "G-25GJQ6FBQN"
 };
 
-// ================= FIREBASE CONFIG =================
-
-
+// ================= FIREBASE INIT =================
 
 firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
 const db = firebase.firestore();
 
+// ================= ELEMENTS =================
+
 const loginBtn = document.getElementById("loginBtn");
 const profilePic = document.getElementById("profilePic");
 const creditDisplay = document.getElementById("creditDisplay");
 const creditsNumber = document.getElementById("creditsNumber");
 
+// ================= LOGIN =================
+
 loginBtn.onclick = () => {
+
 const provider = new firebase.auth.GoogleAuthProvider();
 auth.signInWithPopup(provider);
+
 };
 
-auth.onAuthStateChanged(async user=>{
 
-if(!user) return;
+// ================= AUTH STATE =================
+
+auth.onAuthStateChanged(async user => {
+
+if (!user) return;
 
 loginBtn.classList.add("hidden");
-profilePic.src=user.photoURL;
+
+profilePic.src = user.photoURL;
 profilePic.classList.remove("hidden");
 
 creditDisplay.classList.remove("hidden");
 
-const userRef=db.collection("users").doc(user.uid);
-const doc=await userRef.get();
+const userRef = db.collection("users").doc(user.uid);
+let doc = await userRef.get();
 
-if(!doc.exists){
+// Create user if first login
+if (!doc.exists) {
+
 await userRef.set({
-plan:"free",
-credits:1,
-maxCredits:1,
-lastReset:Date.now()
+plan: "free",
+credits: 1,
+maxCredits: 1,
+lastReset: Date.now()
 });
+
+doc = await userRef.get();
+
 }
 
-checkCreditReset();
-updateCredits();
+// Check if credits should reset
+await checkCreditReset();
+
+// Update UI
+await updateCredits();
 
 });
+
+
+// ================= CREDIT RESET =================
 
 async function checkCreditReset(){
 
-const user=auth.currentUser;
-const ref=db.collection("users").doc(user.uid);
-const doc=await ref.get();
-const data=doc.data();
+const user = auth.currentUser;
+if(!user) return;
 
-const day=1000*60*60*24;
+const ref = db.collection("users").doc(user.uid);
+const doc = await ref.get();
 
-if(Date.now()-data.lastReset>day){
+if(!doc.exists) return;
+
+const data = doc.data();
+
+const day = 1000 * 60 * 60 * 24;
+
+if(Date.now() - data.lastReset > day){
 
 await ref.update({
-credits:data.maxCredits,
-lastReset:Date.now()
+credits: data.maxCredits,
+lastReset: Date.now()
 });
 
 }
 
 }
 
+
+// ================= UPDATE CREDIT UI =================
+
 async function updateCredits(){
 
-const user=auth.currentUser;
-const doc=await db.collection("users").doc(user.uid).get();
-creditsNumber.innerText=doc.data().credits;
+const user = auth.currentUser;
+if(!user) return;
+
+const doc = await db.collection("users").doc(user.uid).get();
+
+if(!doc.exists) return;
+
+const data = doc.data();
+
+creditsNumber.innerText = data.credits;
 
 }
 
-document.getElementById("testBtn").onclick=async ()=>{
 
-const url=document.getElementById("urlInput").value;
-const user=auth.currentUser;
+// ================= RUN TEST =================
+
+document.getElementById("testBtn").onclick = async () => {
+
+const url = document.getElementById("urlInput").value;
+
+const user = auth.currentUser;
 
 if(!user){
 alert("Please sign in first");
 return;
 }
 
-const ref=db.collection("users").doc(user.uid);
-const doc=await ref.get();
-const data=doc.data();
+const ref = db.collection("users").doc(user.uid);
 
-if(data.credits<=0){
+const doc = await ref.get();
+const data = doc.data();
+
+if(data.credits <= 0){
+
 alert("No credits left today");
 return;
+
 }
 
+
+// send request to your Raspberry Pi AI agent
+
 await fetch("http://YOUR_PI_IP:5000/test",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({url:url})
+
+method: "POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body: JSON.stringify({url:url})
+
 });
 
+
+// remove one credit
+
 await ref.update({
-credits:data.credits-1
+credits: data.credits - 1
 });
+
+
+// update display
 
 updateCredits();
 
