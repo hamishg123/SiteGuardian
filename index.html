@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>SiteGuardian</title>
+<link rel="stylesheet" href="style.css">
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+</head>
+
+<body>
+
+<header>
+<h1>SiteGuardian</h1>
+<p>Automated website testing powered by AI</p>
+<button id="loginBtn">Sign in with Google</button>
+</header>
+
+<div id="dashboard" class="hidden">
+
+<h2>Test your website</h2>
+
+<input id="urlInput" placeholder="https://yourwebsite.com">
+<button id="testBtn">Run Test</button>
+
+<div id="result"></div>
+
+</div>
+
+<div id="pricing" class="hidden">
+
+<h2>Upgrade your plan</h2>
+
+<div class="plans">
+
+<div class="card">
+<h3>Starter</h3>
+<p>1 website</p>
+<p>Daily testing</p>
+<h2>£15/month</h2>
+<button>Subscribe</button>
+</div>
+
+<div class="card">
+<h3>Pro</h3>
+<p>5 websites</p>
+<p>Hourly testing</p>
+<h2>£39/month</h2>
+<button>Subscribe</button>
+</div>
+
+<div class="card">
+<h3>Agency</h3>
+<p>20 websites</p>
+<p>Real-time monitoring</p>
+<h2>£99/month</h2>
+<button>Subscribe</button>
+</div>
+
+</div>
+</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>
