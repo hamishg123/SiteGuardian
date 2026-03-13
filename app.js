@@ -1,7 +1,7 @@
 const firebaseConfig = {
-apiKey: "YOURKEY",
-authDomain: "YOURDOMAIN",
-projectId: "YOURPROJECT"
+apiKey: "AIzaSyAaSH_-zEHnM_xdUaxc2UkuFuEU5K-qu-0",
+authDomain: "siteguardian-a4905.firebaseapp.com",
+projectId: "siteguardian-a4905"
 };
 
 firebase.initializeApp(firebaseConfig);
