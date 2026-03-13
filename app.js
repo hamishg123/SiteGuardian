@@ -15,6 +15,12 @@ const firebaseConfig = {
 
 
 
+const firebaseConfig = {
+apiKey:"YOUR_API_KEY",
+authDomain:"YOUR_PROJECT.firebaseapp.com",
+projectId:"YOUR_PROJECT"
+};
+
 firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
@@ -22,138 +28,98 @@ const db = firebase.firestore();
 
 const loginBtn = document.getElementById("loginBtn");
 const profilePic = document.getElementById("profilePic");
-const testsLeftText = document.getElementById("testsLeft");
-
-
-// ================= LOGIN =================
+const creditDisplay = document.getElementById("creditDisplay");
+const creditsNumber = document.getElementById("creditsNumber");
 
 loginBtn.onclick = () => {
-
 const provider = new firebase.auth.GoogleAuthProvider();
 auth.signInWithPopup(provider);
-
 };
 
-
-// ================= USER STATE =================
-
-auth.onAuthStateChanged(async user => {
+auth.onAuthStateChanged(async user=>{
 
 if(!user) return;
 
 loginBtn.classList.add("hidden");
-
-profilePic.src = user.photoURL;
+profilePic.src=user.photoURL;
 profilePic.classList.remove("hidden");
 
-const userRef = db.collection("users").doc(user.uid);
-const doc = await userRef.get();
+creditDisplay.classList.remove("hidden");
+
+const userRef=db.collection("users").doc(user.uid);
+const doc=await userRef.get();
 
 if(!doc.exists){
-
 await userRef.set({
 plan:"free",
 credits:1,
 maxCredits:1,
 lastReset:Date.now()
 });
-
 }
 
-await checkCreditReset();
-updateCreditsDisplay();
+checkCreditReset();
+updateCredits();
 
 });
-
-
-// ================= CREDIT RESET =================
 
 async function checkCreditReset(){
 
-const user = auth.currentUser;
-const userRef = db.collection("users").doc(user.uid);
+const user=auth.currentUser;
+const ref=db.collection("users").doc(user.uid);
+const doc=await ref.get();
+const data=doc.data();
 
-const doc = await userRef.get();
-const data = doc.data();
+const day=1000*60*60*24;
 
-const now = Date.now();
-const day = 1000 * 60 * 60 * 24;
+if(Date.now()-data.lastReset>day){
 
-if(now - data.lastReset > day){
-
-await userRef.update({
+await ref.update({
 credits:data.maxCredits,
-lastReset:now
+lastReset:Date.now()
 });
 
 }
 
 }
 
+async function updateCredits(){
 
-// ================= UPDATE UI =================
-
-async function updateCreditsDisplay(){
-
-const user = auth.currentUser;
-const doc = await db.collection("users").doc(user.uid).get();
-const data = doc.data();
-
-testsLeftText.innerText = `Credits remaining today: ${data.credits}`;
+const user=auth.currentUser;
+const doc=await db.collection("users").doc(user.uid).get();
+creditsNumber.innerText=doc.data().credits;
 
 }
 
+document.getElementById("testBtn").onclick=async ()=>{
 
-// ================= RUN TEST =================
-
-document.getElementById("testBtn").onclick = async () => {
-
-const url = document.getElementById("urlInput").value;
-
-const user = auth.currentUser;
+const url=document.getElementById("urlInput").value;
+const user=auth.currentUser;
 
 if(!user){
 alert("Please sign in first");
 return;
 }
 
-const userRef = db.collection("users").doc(user.uid);
-const doc = await userRef.get();
-const data = doc.data();
+const ref=db.collection("users").doc(user.uid);
+const doc=await ref.get();
+const data=doc.data();
 
-if(data.credits <= 0){
-
-alert("No credits left today. Upgrade your plan.");
-
+if(data.credits<=0){
+alert("No credits left today");
 return;
-
 }
 
-
-// send test to Raspberry Pi
-
 await fetch("http://YOUR_PI_IP:5000/test",{
-
 method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-
+headers:{"Content-Type":"application/json"},
 body:JSON.stringify({url:url})
-
 });
 
-
-// remove credit
-
-await userRef.update({
-credits:data.credits - 1
+await ref.update({
+credits:data.credits-1
 });
 
-
-updateCreditsDisplay();
-
-document.getElementById("result").innerText =
-"AI agent started scanning your website...";
+updateCredits();
 
 };
