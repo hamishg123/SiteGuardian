@@ -10,11 +10,17 @@ const firebaseConfig = {
   measurementId: "G-25GJQ6FBQN"
 };
 
-// ================= STRIPE LINKS =================
+// ================= STRIPE LINKS & PLAN CONFIG =================
 const STRIPE_LINKS = {
     'price_starter': 'https://buy.stripe.com/8x200jalK4ZB39Q89H0Fi00',
     'price_pro': 'https://buy.stripe.com/bJeaEX79y1Np9ye61z0Fi01',
     'price_agency': 'https://buy.stripe.com/4gMaEXeC0eAbbGmgGd0Fi02'
+};
+
+const PLAN_CONFIG = {
+    'starter': { credits: 3, maxCredits: 3, displayName: 'Starter' },
+    'pro': { credits: 15, maxCredits: 15, displayName: 'Pro' },
+    'agency': { credits: 55, maxCredits: 55, displayName: 'Agency' }
 };
 
 // ================= FIREBASE INIT =================
@@ -38,6 +44,7 @@ const userMenu = document.getElementById("userMenu");
 const signOutBtn = document.getElementById("signOutBtn");
 const emailTab = document.getElementById("emailTab");
 const signUpTab = document.getElementById("signUpTab");
+const noCreditsUpgradeBtn = document.getElementById("noCreditsUpgradeBtn");
 
 let selectedPlan = 'pro';
 
@@ -54,10 +61,15 @@ function closeLoginModal() {
 
 function openPaymentModal() {
     paymentModal.classList.remove("hidden");
+    selectPlan('pro'); // Default to Pro plan
 }
 
 function closePaymentModal() {
     paymentModal.classList.add("hidden");
+}
+
+function openNoCreditsModal() {
+    noCreditsModal.classList.remove("hidden");
 }
 
 function closeNoCreditsModal() {
@@ -173,9 +185,40 @@ window.checkout = (priceId) => {
     if (link) {
         const checkoutUrl = new URL(link);
         checkoutUrl.searchParams.append('client_reference_id', user.uid);
+        checkoutUrl.searchParams.append('prefilled_email', user.email);
         window.location.href = checkoutUrl.toString();
     }
 };
+
+// ================= STRIPE WEBHOOK HANDLER =================
+async function handleStripeWebhook(event) {
+    // This function would be called from a backend webhook
+    // For now, we'll check for plan updates when the user returns from Stripe
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const userRef = db.collection("users").doc(user.uid);
+    const doc = await userRef.get();
+    
+    if (doc.exists) {
+        const data = doc.data();
+        // If plan has been updated (this would come from Stripe webhook)
+        if (data.plan && data.plan !== 'free') {
+            await updateCredits();
+        }
+    }
+}
+
+// Check for plan updates on page load (for returning users from Stripe)
+window.addEventListener('load', async () => {
+    const user = auth.currentUser;
+    if (user) {
+        // Small delay to ensure Firestore is updated
+        setTimeout(() => {
+            handleStripeWebhook(null);
+        }, 2000);
+    }
+});
 
 // ================= AUTH STATE =================
 auth.onAuthStateChanged(async user => {
@@ -240,7 +283,8 @@ async function updateCredits() {
     creditsNumber.innerText = data.credits;
     
     if (testsLeftDisplay) {
-        testsLeftDisplay.innerText = `You have ${data.credits} test${data.credits !== 1 ? 's' : ''} remaining today.`;
+        const planName = PLAN_CONFIG[data.plan]?.displayName || 'Free';
+        testsLeftDisplay.innerText = `${planName} Plan • ${data.credits} test${data.credits !== 1 ? 's' : ''} remaining today`;
     }
 }
 
@@ -265,7 +309,7 @@ testBtn.onclick = async () => {
 
     // Check if user has credits
     if (data.credits <= 0) {
-        noCreditsModal.classList.remove("hidden");
+        openNoCreditsModal();
         return;
     }
 
@@ -314,6 +358,14 @@ testBtn.onclick = async () => {
         testBtn.innerText = "Run Free Test";
     }
 };
+
+// ================= NO CREDITS MODAL HANDLER =================
+if (noCreditsUpgradeBtn) {
+    noCreditsUpgradeBtn.onclick = () => {
+        closeNoCreditsModal();
+        openPaymentModal();
+    };
+}
 
 // Close modals on outside click
 document.addEventListener('click', (e) => {
