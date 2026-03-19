@@ -120,6 +120,9 @@ async function signInWithEmail() {
     try {
         await auth.signInWithEmailAndPassword(email, password);
         closeLoginModal();
+        // Clear form
+        document.getElementById("emailInput").value = "";
+        document.getElementById("passwordInput").value = "";
     } catch (err) {
         alert("Sign in failed: " + err.message);
     }
@@ -138,6 +141,9 @@ async function signUpWithEmail() {
     try {
         await auth.createUserWithEmailAndPassword(email, password);
         closeLoginModal();
+        // Clear form
+        document.getElementById("signUpEmailInput").value = "";
+        document.getElementById("signUpPasswordInput").value = "";
     } catch (err) {
         alert("Sign up failed: " + err.message);
     }
@@ -146,27 +152,11 @@ async function signUpWithEmail() {
 // Google Sign In
 function signInWithGoogle() {
     const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider).catch(err => {
+    auth.signInWithPopup(provider).then(() => {
+        closeLoginModal();
+    }).catch(err => {
         console.error("Google sign in failed:", err);
         alert("Google sign in failed. Please try again.");
-    });
-}
-
-// GitHub Sign In
-function signInWithGitHub() {
-    const provider = new firebase.auth.GithubAuthProvider();
-    auth.signInWithPopup(provider).catch(err => {
-        console.error("GitHub sign in failed:", err);
-        alert("GitHub sign in failed. Please try again.");
-    });
-}
-
-// Apple Sign In
-function signInWithApple() {
-    const provider = new firebase.auth.OAuthProvider('apple.com');
-    auth.signInWithPopup(provider).catch(err => {
-        console.error("Apple sign in failed:", err);
-        alert("Apple sign in failed. Please try again.");
     });
 }
 
@@ -287,11 +277,34 @@ testBtn.onclick = async () => {
         // Simulate the test
         await new Promise(resolve => setTimeout(resolve, 3000));
 
+        // Generate random scores for demo
+        const securityScore = Math.floor(Math.random() * 40) + 60; // 60-100
+        const seoScore = Math.floor(Math.random() * 40) + 60; // 60-100
+        const performanceScore = Math.floor(Math.random() * 30) + 70; // 70-100
+
+        // Save test result
+        await db.collection("users").doc(user.uid).collection("tests").add({
+            url: url,
+            timestamp: Date.now(),
+            securityScore: securityScore,
+            seoScore: seoScore,
+            performanceScore: performanceScore,
+            status: "completed"
+        });
+
         await ref.update({
             credits: data.credits - 1
         });
 
-        resultDisplay.innerText = "✅ Test Complete! No major errors found on " + url;
+        resultDisplay.innerHTML = `
+            ✅ Test Complete! 
+            <br><br>
+            Security: <span class="gradient-text font-bold">${securityScore}%</span> | 
+            SEO: <span class="gradient-text font-bold">${seoScore}%</span> | 
+            Performance: <span class="gradient-text font-bold">${performanceScore}%</span>
+            <br><br>
+            <a href="dashboard.html" class="text-green-400 hover:text-green-300 underline">View detailed report</a>
+        `;
         updateCredits();
     } catch (err) {
         console.error(err);

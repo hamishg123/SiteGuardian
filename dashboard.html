@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | SiteGuardian</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .gradient-text { background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .gradient-bg { background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); }
+        .rating-excellent { color: #22c55e; }
+        .rating-good { color: #84cc16; }
+        .rating-fair { color: #f59e0b; }
+        .rating-poor { color: #ef4444; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="bg-[#0a0a0a] text-gray-100 selection:bg-green-500/30">
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 glass border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                    </div>
+                    <span class="text-xl font-bold tracking-tight">Site<span class="gradient-text">Guardian</span></span>
+                </div>
+                <div class="flex items-center gap-6">
+                    <a href="index.html" class="px-4 py-2 rounded-lg border border-white/20 text-white font-semibold text-sm hover:bg-white/5 transition-colors">Home</a>
+                    <img id="profilePic" class="w-9 h-9 rounded-full border border-white/10" alt="Profile" />
+                    <button id="signOutBtn" class="px-4 py-2 rounded-lg border border-white/20 text-white font-semibold text-sm hover:bg-white/5 transition-colors">Sign out</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="pt-24 pb-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Header -->
+            <div class="mb-12">
+                <h1 class="text-4xl font-bold mb-2">Dashboard</h1>
+                <p class="text-gray-400">View your website test results and analytics</p>
+            </div>
+
+            <!-- Stats Overview -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+                <div class="glass p-6 rounded-2xl">
+                    <p class="text-gray-400 text-sm mb-2">Total Tests</p>
+                    <div class="text-3xl font-bold gradient-text" id="totalTests">0</div>
+                </div>
+                <div class="glass p-6 rounded-2xl">
+                    <p class="text-gray-400 text-sm mb-2">Avg Security Score</p>
+                    <div class="text-3xl font-bold gradient-text" id="avgSecurityScore">0%</div>
+                </div>
+                <div class="glass p-6 rounded-2xl">
+                    <p class="text-gray-400 text-sm mb-2">Avg SEO Score</p>
+                    <div class="text-3xl font-bold gradient-text" id="avgSeoScore">0%</div>
+                </div>
+                <div class="glass p-6 rounded-2xl">
+                    <p class="text-gray-400 text-sm mb-2">Avg Performance</p>
+                    <div class="text-3xl font-bold gradient-text" id="avgPerformance">0%</div>
+                </div>
+            </div>
+
+            <!-- Test History -->
+            <div class="glass p-8 rounded-3xl mb-12">
+                <h2 class="text-2xl font-bold mb-6">Your Test Results</h2>
+                
+                <div id="testsList" class="space-y-4">
+                    <!-- Test items will be populated here -->
+                    <div class="text-center py-12 text-gray-400">
+                        <p>No tests yet. <a href="index.html" class="text-green-400 hover:text-green-300">Run your first test</a></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+                <!-- Security Chart -->
+                <div class="glass p-8 rounded-3xl">
+                    <h3 class="text-xl font-bold mb-6">Security Analysis</h3>
+                    <canvas id="securityChart" height="80"></canvas>
+                </div>
+
+                <!-- SEO Chart -->
+                <div class="glass p-8 rounded-3xl">
+                    <h3 class="text-xl font-bold mb-6">SEO Optimization</h3>
+                    <canvas id="seoChart" height="80"></canvas>
+                </div>
+            </div>
+
+            <!-- Detailed Metrics -->
+            <div class="glass p-8 rounded-3xl">
+                <h2 class="text-2xl font-bold mb-6">Detailed Metrics</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Security Metrics -->
+                    <div>
+                        <h3 class="text-lg font-bold mb-4 text-green-400">Security Vulnerabilities</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+                                <span>SQL Injection Risks</span>
+                                <span class="text-sm rating-excellent">✓ Safe</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+                                <span>XSS Vulnerabilities</span>
+                                <span class="text-sm rating-excellent">✓ Safe</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+                                <span>CSRF Protection</span>
+                                <span class="text-sm rating-good">⚠ Needs Review</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+                                <span>SSL/TLS Certificate</span>
+                                <span class="text-sm rating-excellent">✓ Valid</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+                                <span>Exposed API Keys</span>
+                                <span class="text-sm rating-excellent">✓ None Found</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SEO Metrics -->
+                    <div>
+                        <h3 class="text-lg font-bold mb-4 text-green-400">SEO Optimization</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+                                <span>Meta Tags</span>
+                                <span class="text-sm rating-good">⚠ Partial</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+                                <span>Mobile Responsive</span>
+                                <span class="text-sm rating-excellent">✓ Yes</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+                                <span>Page Speed</span>
+                                <span class="text-sm rating-good">⚠ Good</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+                                <span>Sitemap.xml</span>
+                                <span class="text-sm rating-excellent">✓ Present</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+                                <span>Robots.txt</span>
+                                <span class="text-sm rating-excellent">✓ Present</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Metrics -->
+            <div class="glass p-8 rounded-3xl mt-8">
+                <h2 class="text-2xl font-bold mb-6">Performance Metrics</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="p-4 bg-white/5 rounded-lg">
+                        <p class="text-gray-400 text-sm mb-2">Page Load Time</p>
+                        <p class="text-2xl font-bold gradient-text" id="pageLoadTime">2.3s</p>
+                        <p class="text-xs text-gray-500 mt-1">rating-excellent">Excellent</p>
+                    </div>
+                    <div class="p-4 bg-white/5 rounded-lg">
+                        <p class="text-gray-400 text-sm mb-2">Largest Contentful Paint</p>
+                        <p class="text-2xl font-bold gradient-text" id="lcp">1.8s</p>
+                        <p class="text-xs text-gray-500 mt-1">Good</p>
+                    </div>
+                    <div class="p-4 bg-white/5 rounded-lg">
+                        <p class="text-gray-400 text-sm mb-2">Cumulative Layout Shift</p>
+                        <p class="text-2xl font-bold gradient-text" id="cls">0.05</p>
+                        <p class="text-xs text-gray-500 mt-1">Good</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>
