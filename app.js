@@ -10,165 +10,175 @@ const firebaseConfig = {
   measurementId: "G-25GJQ6FBQN"
 };
 
+// ================= STRIPE LINKS =================
+const STRIPE_LINKS = {
+    'price_starter': 'https://buy.stripe.com/8x200jalK4ZB39Q89H0Fi00',
+    'price_pro': 'https://buy.stripe.com/bJeaEX79y1Np9ye61z0Fi01',
+    'price_agency': 'https://buy.stripe.com/4gMaEXeC0eAbbGmgGd0Fi02'
+};
+
 // ================= FIREBASE INIT =================
-
 firebase.initializeApp(firebaseConfig);
-
 const auth = firebase.auth();
 const db = firebase.firestore();
 
 // ================= ELEMENTS =================
-
 const loginBtn = document.getElementById("loginBtn");
 const profilePic = document.getElementById("profilePic");
 const creditDisplay = document.getElementById("creditDisplay");
 const creditsNumber = document.getElementById("creditsNumber");
+const testBtn = document.getElementById("testBtn");
+const urlInput = document.getElementById("urlInput");
+const resultDisplay = document.getElementById("result");
+const testsLeftDisplay = document.getElementById("testsLeft");
 
 // ================= LOGIN =================
-
 loginBtn.onclick = () => {
-
-const provider = new firebase.auth.GoogleAuthProvider();
-auth.signInWithPopup(provider);
-
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider).catch(err => {
+        console.error("Login failed:", err);
+        alert("Login failed. Please try again.");
+    });
 };
 
+// ================= CHECKOUT =================
+window.checkout = (priceId) => {
+    const user = auth.currentUser;
+    if (!user) {
+        alert("Please sign in first to upgrade your plan.");
+        loginBtn.click();
+        return;
+    }
+    
+    const link = STRIPE_LINKS[priceId];
+    if (link) {
+        // Append user ID to Stripe link for tracking if needed
+        const checkoutUrl = new URL(link);
+        checkoutUrl.searchParams.append('client_reference_id', user.uid);
+        window.location.href = checkoutUrl.toString();
+    }
+};
 
 // ================= AUTH STATE =================
-
 auth.onAuthStateChanged(async user => {
+    if (!user) {
+        loginBtn.classList.remove("hidden");
+        profilePic.classList.add("hidden");
+        creditDisplay.classList.add("hidden");
+        return;
+    }
 
-if (!user) return;
+    loginBtn.classList.add("hidden");
+    profilePic.src = user.photoURL;
+    profilePic.classList.remove("hidden");
+    creditDisplay.classList.remove("hidden");
 
-loginBtn.classList.add("hidden");
+    const userRef = db.collection("users").doc(user.uid);
+    let doc = await userRef.get();
 
-profilePic.src = user.photoURL;
-profilePic.classList.remove("hidden");
+    if (!doc.exists) {
+        await userRef.set({
+            plan: "free",
+            credits: 1,
+            maxCredits: 1,
+            lastReset: Date.now()
+        });
+        doc = await userRef.get();
+    }
 
-creditDisplay.classList.remove("hidden");
-
-const userRef = db.collection("users").doc(user.uid);
-let doc = await userRef.get();
-
-// Create user if first login
-if (!doc.exists) {
-
-await userRef.set({
-plan: "free",
-credits: 1,
-maxCredits: 1,
-lastReset: Date.now()
+    await checkCreditReset();
+    await updateCredits();
 });
-
-doc = await userRef.get();
-
-}
-
-// Check if credits should reset
-await checkCreditReset();
-
-// Update UI
-await updateCredits();
-
-});
-
 
 // ================= CREDIT RESET =================
+async function checkCreditReset() {
+    const user = auth.currentUser;
+    if (!user) return;
 
-async function checkCreditReset(){
+    const ref = db.collection("users").doc(user.uid);
+    const doc = await ref.get();
+    if (!doc.exists) return;
 
-const user = auth.currentUser;
-if(!user) return;
+    const data = doc.data();
+    const day = 1000 * 60 * 60 * 24;
 
-const ref = db.collection("users").doc(user.uid);
-const doc = await ref.get();
-
-if(!doc.exists) return;
-
-const data = doc.data();
-
-const day = 1000 * 60 * 60 * 24;
-
-if(Date.now() - data.lastReset > day){
-
-await ref.update({
-credits: data.maxCredits,
-lastReset: Date.now()
-});
-
+    if (Date.now() - data.lastReset > day) {
+        await ref.update({
+            credits: data.maxCredits,
+            lastReset: Date.now()
+        });
+    }
 }
-
-}
-
 
 // ================= UPDATE CREDIT UI =================
+async function updateCredits() {
+    const user = auth.currentUser;
+    if (!user) return;
 
-async function updateCredits(){
+    const doc = await db.collection("users").doc(user.uid).get();
+    if (!doc.exists) return;
 
-const user = auth.currentUser;
-if(!user) return;
-
-const doc = await db.collection("users").doc(user.uid).get();
-
-if(!doc.exists) return;
-
-const data = doc.data();
-
-creditsNumber.innerText = data.credits;
-
+    const data = doc.data();
+    creditsNumber.innerText = data.credits;
+    
+    if (testsLeftDisplay) {
+        testsLeftDisplay.innerText = `You have ${data.credits} tests remaining today.`;
+    }
 }
-
 
 // ================= RUN TEST =================
+testBtn.onclick = async () => {
+    const url = urlInput.value;
+    if (!url) {
+        alert("Please enter a URL");
+        return;
+    }
 
-document.getElementById("testBtn").onclick = async () => {
+    const user = auth.currentUser;
+    if (!user) {
+        alert("Please sign in first");
+        loginBtn.click();
+        return;
+    }
 
-const url = document.getElementById("urlInput").value;
+    const ref = db.collection("users").doc(user.uid);
+    const doc = await ref.get();
+    const data = doc.data();
 
-const user = auth.currentUser;
+    if (data.credits <= 0) {
+        alert("No credits left today. Please upgrade your plan.");
+        return;
+    }
 
-if(!user){
-alert("Please sign in first");
-return;
-}
+    testBtn.disabled = true;
+    testBtn.innerText = "Testing...";
+    resultDisplay.innerText = "AI Agent is analyzing your site...";
 
-const ref = db.collection("users").doc(user.uid);
+    try {
+        // Simulate the test for now as the Pi IP is a placeholder
+        // In a real scenario, this would be a fetch to the backend
+        /*
+        await fetch("https://api.siteguardian.ai/test", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url: url, userId: user.uid })
+        });
+        */
+        
+        // Mocking the delay
+        await new Promise(resolve => setTimeout(resolve, 3000));
 
-const doc = await ref.get();
-const data = doc.data();
+        await ref.update({
+            credits: data.credits - 1
+        });
 
-if(data.credits <= 0){
-
-alert("No credits left today");
-return;
-
-}
-
-
-// send request to your Raspberry Pi AI agent
-
-await fetch("http://YOUR_PI_IP:5000/test",{
-
-method: "POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body: JSON.stringify({url:url})
-
-});
-
-
-// remove one credit
-
-await ref.update({
-credits: data.credits - 1
-});
-
-
-// update display
-
-updateCredits();
-
+        resultDisplay.innerText = "✅ Test Complete! No major errors found on " + url;
+        updateCredits();
+    } catch (err) {
+        console.error(err);
+        resultDisplay.innerText = "❌ Test failed. Please try again later.";
+    } finally {
+        testBtn.disabled = false;
+        testBtn.innerText = "Run Free Test";
+    }
 };

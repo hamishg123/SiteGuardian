@@ -1,126 +1,29 @@
-body{
-margin:0;
-font-family:Inter,sans-serif;
-background:#0f0f0f;
-color:white;
+/* Custom styles for SiteGuardian */
+@layer base {
+  body {
+    @apply antialiased;
+  }
 }
 
-.navbar{
-display:flex;
-justify-content:space-between;
-align-items:center;
-padding:18px 40px;
-background:#111;
-position:sticky;
-top:0;
-z-index:1000;
+.glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.logo{
-font-size:20px;
-font-weight:600;
+.gradient-text {
+  background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.navRight{
-display:flex;
-align-items:center;
-gap:18px;
+.gradient-bg {
+  background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
 }
 
-.creditDisplay{
-background:#1a1a1a;
-padding:6px 14px;
-border-radius:20px;
-font-size:14px;
-color:#4CAF50;
-}
-
-.loginBtn{
-background:#4CAF50;
-border:none;
-padding:8px 16px;
-border-radius:6px;
-cursor:pointer;
-color:white;
-}
-
-.profilePic{
-width:36px;
-height:36px;
-border-radius:50%;
-}
-
-.hidden{
-display:none;
-}
-
-.hero{
-text-align:center;
-padding:120px 20px;
-}
-
-.testBox{
-margin-top:30px;
-display:flex;
-justify-content:center;
-gap:10px;
-}
-
-.testBox input{
-padding:12px;
-width:280px;
-border-radius:6px;
-border:none;
-}
-
-.testBox button{
-padding:12px 20px;
-border:none;
-background:#4CAF50;
-color:white;
-border-radius:6px;
-cursor:pointer;
-}
-
-.features{
-display:flex;
-justify-content:center;
-gap:40px;
-padding:80px 20px;
-}
-
-.featureCard{
-background:#1a1a1a;
-padding:30px;
-border-radius:10px;
-width:260px;
-}
-
-.pricing{
-text-align:center;
-padding:100px 20px;
-}
-
-.pricingGrid{
-display:flex;
-justify-content:center;
-gap:30px;
-margin-top:40px;
-}
-
-.priceCard{
-background:#1a1a1a;
-padding:40px;
-border-radius:12px;
-width:240px;
-}
-
-.priceCard.featured{
-border:2px solid #4CAF50;
-}
-
-footer{
-text-align:center;
-padding:30px;
-color:#777;
+/* Smooth transitions */
+* {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
 }

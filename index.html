@@ -1,128 +1,194 @@
-<!-- ================= index.html ================= -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SiteGuardian</title>
-
-<link rel="stylesheet" href="style.css">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SiteGuardian | AI-Powered Website Monitoring</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .gradient-text { background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .gradient-bg { background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); }
+    </style>
 </head>
+<body class="bg-[#0a0a0a] text-gray-100 selection:bg-green-500/30">
 
-<body>
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 glass border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                    </div>
+                    <span class="text-xl font-bold tracking-tight">Site<span class="gradient-text">Guardian</span></span>
+                </div>
+                <div class="flex items-center gap-6">
+                    <div id="creditDisplay" class="hidden px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-sm font-medium">
+                        Credits: <span id="creditsNumber">0</span>
+                    </div>
+                    <button id="loginBtn" class="px-4 py-2 rounded-lg bg-white text-black font-semibold text-sm hover:bg-gray-200 transition-colors">Sign in</button>
+                    <img id="profilePic" class="w-9 h-9 rounded-full border border-white/10 hidden" alt="Profile" />
+                </div>
+            </div>
+        </div>
+    </nav>
 
-<!-- NAVBAR -->
-<nav class="navbar">
+    <!-- Hero Section -->
+    <section class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10">
+            <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-green-500/10 blur-[120px] rounded-full"></div>
+            <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-green-500/5 blur-[120px] rounded-full"></div>
+        </div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-5xl lg:text-7xl font-extrabold tracking-tight mb-6">
+                AI-Powered <span class="gradient-text">Website Monitoring</span>
+            </h1>
+            <p class="text-lg lg:text-xl text-gray-400 max-w-2xl mx-auto mb-10">
+                Automatically test your website for broken buttons, forms, and errors using advanced AI agents that browse like real users.
+            </p>
+            
+            <div class="max-w-xl mx-auto glass p-2 rounded-2xl flex flex-col sm:flex-row gap-2">
+                <input id="urlInput" type="url" placeholder="https://yourwebsite.com" class="flex-1 bg-transparent border-none focus:ring-0 px-4 py-3 text-white placeholder-gray-500" />
+                <button id="testBtn" class="gradient-bg text-black font-bold px-8 py-3 rounded-xl hover:opacity-90 transition-opacity whitespace-nowrap">
+                    Run Free Test
+                </button>
+            </div>
+            
+            <p id="testsLeft" class="mt-4 text-sm text-gray-500"></p>
+            <p id="result" class="mt-6 text-green-400 font-medium"></p>
+        </div>
+    </section>
 
-<div class="logo">SiteGuardian</div>
+    <!-- Features Section -->
+    <section class="py-20 bg-white/[0.02]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="glass p-8 rounded-3xl hover:border-green-500/30 transition-colors group">
+                    <div class="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">AI Browser Testing</h3>
+                    <p class="text-gray-400 leading-relaxed">AI agents simulate real users and explore your site to find hidden errors and UX issues.</p>
+                </div>
+                
+                <div class="glass p-8 rounded-3xl hover:border-green-500/30 transition-colors group">
+                    <div class="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Broken Button Detection</h3>
+                    <p class="text-gray-400 leading-relaxed">Automatically detect buttons and links that fail, lead to 404s, or trigger console errors.</p>
+                </div>
+                
+                <div class="glass p-8 rounded-3xl hover:border-green-500/30 transition-colors group">
+                    <div class="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">24/7 Monitoring</h3>
+                    <p class="text-gray-400 leading-relaxed">Your website is checked continuously. Get instant alerts before your customers notice any problems.</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-<div class="navRight">
+    <!-- Pricing Section -->
+    <section class="py-24 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold mb-4">Simple, Transparent <span class="gradient-text">Pricing</span></h2>
+                <p class="text-gray-400">Choose the plan that fits your monitoring needs.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Starter -->
+                <div class="glass p-10 rounded-3xl flex flex-col">
+                    <h3 class="text-lg font-medium text-gray-400 mb-2">Starter</h3>
+                    <div class="flex items-baseline gap-1 mb-8">
+                        <span class="text-4xl font-bold">£9.99</span>
+                        <span class="text-gray-500">/month</span>
+                    </div>
+                    <ul class="space-y-4 mb-10 flex-1">
+                        <li class="flex items-center gap-3 text-gray-300">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            3 Credits per day
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-300">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Security results
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-300">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Email Alerts
+                        </li>
+                    </ul>
+                    <button onclick="checkout('price_starter')" class="w-full py-4 rounded-2xl border border-white/10 font-bold hover:bg-white hover:text-black transition-all">Get Started</button>
+                </div>
+                
+                <!-- Pro -->
+                <div class="glass p-10 rounded-3xl flex flex-col relative border-green-500/50">
+                    <div class="absolute -top-4 left-1/2 -translate-x-1/2 gradient-bg text-black text-xs font-bold px-4 py-1 rounded-full uppercase tracking-wider">Most Popular</div>
+                    <h3 class="text-lg font-medium text-gray-400 mb-2">Pro</h3>
+                    <div class="flex items-baseline gap-1 mb-8">
+                        <span class="text-4xl font-bold">£35</span>
+                        <span class="text-gray-500">/month</span>
+                    </div>
+                    <ul class="space-y-4 mb-10 flex-1">
+                        <li class="flex items-center gap-3 text-gray-300">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            15 Credits per day
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-300">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            SEO & Security analysis
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-300">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Screenshot Reports
+                        </li>
+                    </ul>
+                    <button onclick="checkout('price_pro')" class="w-full py-4 rounded-2xl gradient-bg text-black font-bold hover:opacity-90 transition-all">Get Started</button>
+                </div>
+                
+                <!-- Agency -->
+                <div class="glass p-10 rounded-3xl flex flex-col">
+                    <h3 class="text-lg font-medium text-gray-400 mb-2">Agency</h3>
+                    <div class="flex items-baseline gap-1 mb-8">
+                        <span class="text-4xl font-bold">£99</span>
+                        <span class="text-gray-500">/month</span>
+                    </div>
+                    <ul class="space-y-4 mb-10 flex-1">
+                        <li class="flex items-center gap-3 text-gray-300">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            55 Credits per day
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-300">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Full Technical Audit
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-300">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Priority 24/7 Support
+                        </li>
+                    </ul>
+                    <button onclick="checkout('price_agency')" class="w-full py-4 rounded-2xl border border-white/10 font-bold hover:bg-white hover:text-black transition-all">Get Started</button>
+                </div>
+            </div>
+        </div>
+    </section>
 
-<button id="loginBtn" class="loginBtn">Sign in</button>
+    <footer class="py-12 border-t border-white/5 text-center text-gray-500 text-sm">
+        <div class="max-w-7xl mx-auto px-4">
+            <p>© 2026 SiteGuardian. All rights reserved.</p>
+        </div>
+    </footer>
 
-<img id="profilePic" class="profilePic hidden" />
-
-<div id="creditDisplay" class="creditDisplay hidden">
-Credits: <span id="creditsNumber">0</span>
-</div>
-
-</div>
-
-</nav>
-
-
-<!-- HERO -->
-<section class="hero">
-<h1>AI Website Monitoring</h1>
-<p>Automatically test your website for broken buttons, forms and errors.</p>
-
-<div class="testBox">
-<input id="urlInput" placeholder="https://yourwebsite.com">
-<button id="testBtn">Run Free Test</button>
-</div>
-
-<p id="testsLeft" class="testsLeft"></p>
-<p id="result" class="result"></p>
-
-</section>
-
-
-<!-- FEATURES -->
-<section class="features">
-
-<div class="featureCard">
-<h3>AI Browser Testing</h3>
-<p>AI agents simulate real users and explore your site to find errors.</p>
-</div>
-
-<div class="featureCard">
-<h3>Broken Button Detection</h3>
-<p>Automatically detect buttons and links that fail or lead to errors.</p>
-</div>
-
-<div class="featureCard">
-<h3>24/7 Monitoring</h3>
-<p>Your website is checked continuously to detect problems early.</p>
-</div>
-
-</section>
-
-
-<!-- PRICING -->
-<section class="pricing">
-<h2>Pricing</h2>
-<p class="pricingSub">Upgrade for continuous monitoring</p>
-
-<div class="pricingGrid">
-
-<div class="priceCard">
-<h3>Starter</h3>
-<h1>£9.99</h1>
-<ul>
-<li>3 Credits a day</li>
-<li>Surectity results</li>
-<li>Email Alerts</li>
-</ul>
-<button>Get Started</button>
-</div>
-
-<div class="priceCard featured">
-<h3>Pro</h3>
-<h1>£35</h1>
-<ul>
-<li>15 credits Daily</li>
-<li>endepth Results With Seo And Security</li>
-<li>Screenshot Reports</li>
-</ul>
-<button>Get Started</button>
-</div>
-
-<div class="priceCard">
-<h3>Agency</h3>
-<h1>£99</h1>
-<ul>
-<li>55 Credit Daily</li>
-<li>endepth Results With Seo And Security</li>
-<li>Priority Support</li>
-</ul>
-<button>Get Started</button>
-</div>
-
-</div>
-
-</section>
-
-
-<footer>
-© 2026 SiteGuardian
-</footer>
-
-<script src="app.js"></script>
-
+    <script src="app.js"></script>
 </body>
 </html>
