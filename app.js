@@ -188,7 +188,7 @@ auth.onAuthStateChanged(async user => {
 
     loginBtn.classList.add("hidden");
     userMenu.classList.remove("hidden");
-    profilePic.src = user.photoURL || "https://via.placeholder.com/36";
+    profilePic.src = user.photoURL || "https://www.vectorstock.com/royalty-free-vector/social-network-default-profile-picture-avatar-icon-vector-57120632";
     creditDisplay.classList.remove("hidden");
 
     const userRef = db.collection("users").doc(user.uid);
