@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SiteGuardian | AI-Powered Website Monitoring</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -13,8 +13,17 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
         .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .glass-dark { background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .gradient-text { background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .gradient-bg { background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); }
+        .gradient-border { background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); padding: 1px; }
+        .modal-overlay { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); }
+        .modal-content { animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .floating-badge { animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
+        .glow { box-shadow: 0 0 20px rgba(74, 222, 128, 0.3); }
+        .hidden { display: none; }
     </style>
 </head>
 <body class="bg-[#0a0a0a] text-gray-100 selection:bg-green-500/30">
@@ -34,7 +43,10 @@
                         Credits: <span id="creditsNumber">0</span>
                     </div>
                     <button id="loginBtn" class="px-4 py-2 rounded-lg bg-white text-black font-semibold text-sm hover:bg-gray-200 transition-colors">Sign in</button>
-                    <img id="profilePic" class="w-9 h-9 rounded-full border border-white/10 hidden" alt="Profile" />
+                    <div id="userMenu" class="hidden flex items-center gap-4">
+                        <img id="profilePic" class="w-9 h-9 rounded-full border border-white/10" alt="Profile" />
+                        <button id="signOutBtn" class="px-4 py-2 rounded-lg border border-white/20 text-white font-semibold text-sm hover:bg-white/5 transition-colors">Sign out</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -48,11 +60,13 @@
         </div>
         
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="inline-block mb-6 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/30 text-green-400 text-xs font-bold uppercase tracking-wider">🚀 30-Day Money-Back Guarantee</div>
+            
             <h1 class="text-5xl lg:text-7xl font-extrabold tracking-tight mb-6">
                 AI-Powered <span class="gradient-text">Website Monitoring</span>
             </h1>
             <p class="text-lg lg:text-xl text-gray-400 max-w-2xl mx-auto mb-10">
-                Automatically test your website for broken buttons, forms, and errors using advanced AI agents that browse like real users.
+                Automatically test your website for broken buttons, forms, and errors using advanced AI agents that browse like real users. Catch issues before your customers do.
             </p>
             
             <div class="max-w-xl mx-auto glass p-2 rounded-2xl flex flex-col sm:flex-row gap-2">
@@ -98,12 +112,36 @@
         </div>
     </section>
 
+    <!-- Trust Section -->
+    <section class="py-16 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
+                <div>
+                    <div class="text-3xl font-bold gradient-text mb-2">99.9%</div>
+                    <p class="text-gray-400">Uptime Guarantee</p>
+                </div>
+                <div>
+                    <div class="text-3xl font-bold gradient-text mb-2">5M+</div>
+                    <p class="text-gray-400">Tests Run Daily</p>
+                </div>
+                <div>
+                    <div class="text-3xl font-bold gradient-text mb-2">2s</div>
+                    <p class="text-gray-400">Average Response Time</p>
+                </div>
+                <div>
+                    <div class="text-3xl font-bold gradient-text mb-2">24/7</div>
+                    <p class="text-gray-400">Expert Support</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Pricing Section -->
     <section class="py-24 relative overflow-hidden">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div class="text-center mb-16">
                 <h2 class="text-4xl font-bold mb-4">Simple, Transparent <span class="gradient-text">Pricing</span></h2>
-                <p class="text-gray-400">Choose the plan that fits your monitoring needs.</p>
+                <p class="text-gray-400">Choose the plan that fits your monitoring needs. All plans include 30-day money-back guarantee.</p>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -127,12 +165,16 @@
                             <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                             Email Alerts
                         </li>
+                        <li class="flex items-center gap-3 text-gray-300">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            30-Day Guarantee
+                        </li>
                     </ul>
                     <button onclick="checkout('price_starter')" class="w-full py-4 rounded-2xl border border-white/10 font-bold hover:bg-white hover:text-black transition-all">Get Started</button>
                 </div>
                 
                 <!-- Pro -->
-                <div class="glass p-10 rounded-3xl flex flex-col relative border-green-500/50">
+                <div class="glass p-10 rounded-3xl flex flex-col relative border-green-500/50 glow">
                     <div class="absolute -top-4 left-1/2 -translate-x-1/2 gradient-bg text-black text-xs font-bold px-4 py-1 rounded-full uppercase tracking-wider">Most Popular</div>
                     <h3 class="text-lg font-medium text-gray-400 mb-2">Pro</h3>
                     <div class="flex items-baseline gap-1 mb-8">
@@ -151,6 +193,10 @@
                         <li class="flex items-center gap-3 text-gray-300">
                             <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                             Screenshot Reports
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-300">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            30-Day Guarantee
                         </li>
                     </ul>
                     <button onclick="checkout('price_pro')" class="w-full py-4 rounded-2xl gradient-bg text-black font-bold hover:opacity-90 transition-all">Get Started</button>
@@ -176,6 +222,10 @@
                             <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                             Priority 24/7 Support
                         </li>
+                        <li class="flex items-center gap-3 text-gray-300">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            30-Day Guarantee
+                        </li>
                     </ul>
                     <button onclick="checkout('price_agency')" class="w-full py-4 rounded-2xl border border-white/10 font-bold hover:bg-white hover:text-black transition-all">Get Started</button>
                 </div>
@@ -183,11 +233,142 @@
         </div>
     </section>
 
+    <!-- Support Section -->
+    <section class="py-16 bg-white/[0.02]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h3 class="text-2xl font-bold mb-4">Need Help?</h3>
+            <p class="text-gray-400 mb-6">Our support team is available 24/7 to assist you with any questions or issues.</p>
+            <a href="mailto:hamishgordon051@gmail.com" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400 font-semibold hover:bg-green-500/20 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                Contact Support: hamishgordon051@gmail.com
+            </a>
+        </div>
+    </section>
+
     <footer class="py-12 border-t border-white/5 text-center text-gray-500 text-sm">
         <div class="max-w-7xl mx-auto px-4">
-            <p>© 2026 SiteGuardian. All rights reserved.</p>
+            <p>© 2026 SiteGuardian. All rights reserved. | 30-Day Money-Back Guarantee</p>
         </div>
     </footer>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay">
+        <div class="modal-content glass-dark rounded-3xl p-8 w-full max-w-md mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">Sign In</h2>
+                <button onclick="closeLoginModal()" class="text-gray-400 hover:text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <!-- Email/Password Tab -->
+            <div id="emailTab" class="space-y-4">
+                <input id="emailInput" type="email" placeholder="Email address" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-green-500" />
+                <input id="passwordInput" type="password" placeholder="Password" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-green-500" />
+                <button onclick="signInWithEmail()" class="w-full py-3 rounded-lg gradient-bg text-black font-bold hover:opacity-90 transition-all">Sign In</button>
+                <p class="text-center text-gray-400 text-sm">Don't have an account? <button onclick="toggleSignUp()" class="text-green-400 hover:text-green-300">Sign up</button></p>
+            </div>
+
+            <!-- Sign Up Tab -->
+            <div id="signUpTab" class="hidden space-y-4">
+                <input id="signUpEmailInput" type="email" placeholder="Email address" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-green-500" />
+                <input id="signUpPasswordInput" type="password" placeholder="Password (min 6 chars)" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-green-500" />
+                <button onclick="signUpWithEmail()" class="w-full py-3 rounded-lg gradient-bg text-black font-bold hover:opacity-90 transition-all">Create Account</button>
+                <p class="text-center text-gray-400 text-sm">Already have an account? <button onclick="toggleSignUp()" class="text-green-400 hover:text-green-300">Sign in</button></p>
+            </div>
+
+            <div class="relative my-6">
+                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-white/10"></div></div>
+                <div class="relative flex justify-center text-sm"><span class="px-2 bg-black text-gray-400">Or continue with</span></div>
+            </div>
+
+            <div class="space-y-3">
+                <button onclick="signInWithGoogle()" class="w-full py-3 rounded-lg border border-white/10 font-semibold hover:bg-white/5 transition-colors flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                    Google
+                </button>
+                <button onclick="signInWithGitHub()" class="w-full py-3 rounded-lg border border-white/10 font-semibold hover:bg-white/5 transition-colors flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                    GitHub
+                </button>
+                <button onclick="signInWithApple()" class="w-full py-3 rounded-lg border border-white/10 font-semibold hover:bg-white/5 transition-colors flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.05 13.5c-.91 0-1.82.55-2.25 1.51.93.64 1.54 1.62 1.54 2.75 0 1.9-1.55 3.45-3.45 3.45-1.9 0-3.45-1.55-3.45-3.45 0-1.13.61-2.11 1.54-2.75-.43-.96-1.34-1.51-2.25-1.51-1.9 0-3.45 1.55-3.45 3.45 0 1.9 1.55 3.45 3.45 3.45.91 0 1.82-.55 2.25-1.51-.93-.64-1.54-1.62-1.54-2.75 0-1.13.61-2.11 1.54-2.75-.43-.96-1.34-1.51-2.25-1.51-1.9 0-3.45 1.55-3.45 3.45 0 1.9 1.55 3.45 3.45 3.45 1.9 0 3.45-1.55 3.45-3.45 0-1.13-.61-2.11-1.54-2.75.43-.96 1.34-1.51 2.25-1.51 1.9 0 3.45-1.55 3.45-3.45 0-1.9-1.55-3.45-3.45-3.45z"/></svg>
+                    Apple
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay">
+        <div class="modal-content glass-dark rounded-3xl p-8 w-full max-w-md mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">Upgrade Your Plan</h2>
+                <button onclick="closePaymentModal()" class="text-gray-400 hover:text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <div class="space-y-4 mb-6">
+                <div id="starterOption" onclick="selectPlan('starter')" class="p-4 rounded-lg border border-white/10 cursor-pointer hover:border-green-500/50 transition-colors">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="font-bold">Starter</h3>
+                            <p class="text-sm text-gray-400">3 Credits/day</p>
+                        </div>
+                        <div class="text-2xl font-bold">£9.99</div>
+                    </div>
+                </div>
+
+                <div id="proOption" onclick="selectPlan('pro')" class="p-4 rounded-lg border border-green-500/50 cursor-pointer hover:border-green-500 transition-colors bg-green-500/5">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="font-bold">Pro <span class="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">Popular</span></h3>
+                            <p class="text-sm text-gray-400">15 Credits/day</p>
+                        </div>
+                        <div class="text-2xl font-bold">£35</div>
+                    </div>
+                </div>
+
+                <div id="agencyOption" onclick="selectPlan('agency')" class="p-4 rounded-lg border border-white/10 cursor-pointer hover:border-green-500/50 transition-colors">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="font-bold">Agency</h3>
+                            <p class="text-sm text-gray-400">55 Credits/day</p>
+                        </div>
+                        <div class="text-2xl font-bold">£99</div>
+                    </div>
+                </div>
+            </div>
+
+            <button id="paymentBtn" onclick="proceedToPayment()" class="w-full py-3 rounded-lg gradient-bg text-black font-bold hover:opacity-90 transition-all">Continue to Payment</button>
+            <p class="text-center text-gray-400 text-xs mt-4">30-day money-back guarantee. Cancel anytime.</p>
+        </div>
+    </div>
+
+    <!-- No Credits Modal -->
+    <div id="noCreditsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay">
+        <div class="modal-content glass-dark rounded-3xl p-8 w-full max-w-md mx-4 text-center">
+            <svg class="w-16 h-16 mx-auto mb-4 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <h2 class="text-2xl font-bold mb-2">No Credits Left</h2>
+            <p class="text-gray-400 mb-6">You've used all your free tests for today. Upgrade your plan to continue testing.</p>
+            
+            <div class="space-y-3 mb-6">
+                <div class="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+                    <p class="text-sm text-gray-300"><span class="font-bold">Starter:</span> 3 credits/day - £9.99/month</p>
+                </div>
+                <div class="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+                    <p class="text-sm text-gray-300"><span class="font-bold">Pro:</span> 15 credits/day - £35/month</p>
+                </div>
+                <div class="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+                    <p class="text-sm text-gray-300"><span class="font-bold">Agency:</span> 55 credits/day - £99/month</p>
+                </div>
+            </div>
+
+            <button onclick="openPaymentModal()" class="w-full py-3 rounded-lg gradient-bg text-black font-bold hover:opacity-90 transition-all mb-3">Upgrade Now</button>
+            <button onclick="closeNoCreditsModal()" class="w-full py-3 rounded-lg border border-white/10 font-bold hover:bg-white/5 transition-all">Maybe Later</button>
+        </div>
+    </div>
 
     <script src="app.js"></script>
 </body>
