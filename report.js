@@ -43,6 +43,8 @@ auth.onAuthStateChanged(async user => {
 // ================= LOAD TEST REPORT =================
 async function loadTestReport(userId, testId) {
     try {
+        console.log("Loading test report for:", testId);
+        
         const testRef = db.collection("users").doc(userId).collection("tests").doc(testId);
         const doc = await testRef.get();
 
@@ -53,6 +55,7 @@ async function loadTestReport(userId, testId) {
         }
 
         currentTest = doc.data();
+        console.log("Test data loaded:", currentTest);
         displayTestReport(currentTest);
 
     } catch (err) {
@@ -64,7 +67,7 @@ async function loadTestReport(userId, testId) {
 // ================= DISPLAY TEST REPORT =================
 function displayTestReport(test) {
     // Update header
-    document.getElementById("reportUrl").innerText = test.url;
+    document.getElementById("reportUrl").innerText = test.url || "N/A";
     const date = new Date(test.timestamp).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
@@ -92,27 +95,34 @@ function displayTestReport(test) {
 
 // ================= UPDATE SCORE CIRCLES =================
 function updateScoreCircles(test) {
-    const securityPercent = (test.securityScore / 100) * 100;
-    const performancePercent = (test.performanceScore / 100) * 100;
-    const seoPercent = (test.seoScore / 100) * 100;
+    const security = test.securityScore || 0;
+    const performance = test.performanceScore || 0;
+    const seo = test.seoScore || 0;
+
+    const securityPercent = security > 0 ? (security / 100) * 100 : 0;
+    const performancePercent = performance > 0 ? (performance / 100) * 100 : 0;
+    const seoPercent = seo > 0 ? (seo / 100) * 100 : 0;
 
     // Security
     document.getElementById("securityScoreCircle").style.setProperty('--score-percent', securityPercent);
-    document.getElementById("securityScoreValue").innerText = test.securityScore;
-    document.getElementById("securityRating").innerText = getRating(test.securityScore).label;
-    document.getElementById("securityRating").className = `font-bold text-lg mb-6 ${getRating(test.securityScore).color}`;
+    document.getElementById("securityScoreValue").innerText = security > 0 ? security : "N/A";
+    const securityRating = getRating(security);
+    document.getElementById("securityRating").innerText = securityRating.label;
+    document.getElementById("securityRating").className = `font-bold text-lg mb-6 ${securityRating.color}`;
 
     // Performance
     document.getElementById("performanceScoreCircle").style.setProperty('--score-percent', performancePercent);
-    document.getElementById("performanceScoreValue").innerText = test.performanceScore;
-    document.getElementById("performanceRating").innerText = getRating(test.performanceScore).label;
-    document.getElementById("performanceRating").className = `font-bold text-lg mb-6 ${getRating(test.performanceScore).color}`;
+    document.getElementById("performanceScoreValue").innerText = performance > 0 ? performance : "N/A";
+    const performanceRating = getRating(performance);
+    document.getElementById("performanceRating").innerText = performanceRating.label;
+    document.getElementById("performanceRating").className = `font-bold text-lg mb-6 ${performanceRating.color}`;
 
     // SEO
     document.getElementById("seoScoreCircle").style.setProperty('--score-percent', seoPercent);
-    document.getElementById("seoScoreValue").innerText = test.seoScore;
-    document.getElementById("seoRating").innerText = getRating(test.seoScore).label;
-    document.getElementById("seoRating").className = `font-bold text-lg mb-6 ${getRating(test.seoScore).color}`;
+    document.getElementById("seoScoreValue").innerText = seo > 0 ? seo : "N/A";
+    const seoRating = getRating(seo);
+    document.getElementById("seoRating").innerText = seoRating.label;
+    document.getElementById("seoRating").className = `font-bold text-lg mb-6 ${seoRating.color}`;
 }
 
 // ================= DISPLAY SECURITY METRICS =================
@@ -129,18 +139,20 @@ function displaySecurityMetrics(test) {
     ];
 
     container.innerHTML = securityChecks.map(check => {
-        const status = metrics[check.key] || "unknown";
-        const isPass = status === "pass" || status === "safe" || status === "valid";
-        const color = isPass ? "text-green-400" : "text-red-400";
-        const icon = isPass ? "✓" : "✗";
+        const status = metrics[check.key] || null;
+        const isPass = status === "pass" || status === "safe" || status === "valid" || status === true;
+        const isFail = status === "fail" || status === "unsafe" || status === "invalid" || status === false;
+        const color = isPass ? "text-green-400" : isFail ? "text-red-400" : "text-gray-400";
+        const icon = isPass ? "✓" : isFail ? "✗" : "?";
+        const statusText = isPass ? "Pass" : isFail ? "Fail" : "N/A";
 
         return `
-            <div class="metric-row" style="--metric-color: ${isPass ? '#22c55e' : '#ef4444'};">
+            <div class="metric-row" style="--metric-color: ${isPass ? '#22c55e' : isFail ? '#ef4444' : '#9ca3af'};">
                 <div class="flex items-center gap-3">
                     <span class="text-xl">${check.icon}</span>
                     <span class="font-semibold">${check.name}</span>
                 </div>
-                <span class="font-bold ${color}">${icon} ${isPass ? 'Pass' : 'Fail'}</span>
+                <span class="font-bold ${color}">${icon} ${statusText}</span>
             </div>
         `;
     }).join("");
@@ -160,21 +172,26 @@ function displayPerformanceMetrics(test) {
     ];
 
     container.innerHTML = performanceChecks.map(check => {
-        const value = metrics[check.key] || "N/A";
-        const displayValue = value !== "N/A" ? `${value}${check.unit}` : value;
+        const value = metrics[check.key];
+        const displayValue = value !== undefined && value !== null ? `${value}${check.unit}` : "N/A";
         
         // Determine if it's good or needs improvement
         let isGood = true;
-        if (check.key === "loadTime" && value > 3) isGood = false;
-        if (check.key === "lcp" && value > 2.5) isGood = false;
-        if (check.key === "cls" && value > 0.1) isGood = false;
-        if (check.key === "fid" && value > 100) isGood = false;
-        if (check.key === "ttfb" && value > 600) isGood = false;
+        if (value !== undefined && value !== null) {
+            if (check.key === "loadTime" && value > 3) isGood = false;
+            if (check.key === "lcp" && value > 2.5) isGood = false;
+            if (check.key === "cls" && value > 0.1) isGood = false;
+            if (check.key === "fid" && value > 100) isGood = false;
+            if (check.key === "ttfb" && value > 600) isGood = false;
+        } else {
+            isGood = null;
+        }
 
-        const color = isGood ? "text-green-400" : "text-yellow-400";
+        const color = isGood === true ? "text-green-400" : isGood === false ? "text-yellow-400" : "text-gray-400";
+        const borderColor = isGood === true ? '#22c55e' : isGood === false ? '#f59e0b' : '#9ca3af';
 
         return `
-            <div class="metric-row" style="--metric-color: ${isGood ? '#22c55e' : '#f59e0b'};">
+            <div class="metric-row" style="--metric-color: ${borderColor};">
                 <div class="flex items-center gap-3">
                     <span class="text-xl">${check.icon}</span>
                     <span class="font-semibold">${check.name}</span>
@@ -199,18 +216,20 @@ function displaySeoMetrics(test) {
     ];
 
     container.innerHTML = seoChecks.map(check => {
-        const status = metrics[check.key] || "unknown";
-        const isPass = status === "pass" || status === "yes" || status === "present";
-        const color = isPass ? "text-green-400" : "text-orange-400";
-        const icon = isPass ? "✓" : "⚠";
+        const status = metrics[check.key] || null;
+        const isPass = status === "pass" || status === "yes" || status === "present" || status === true;
+        const isFail = status === "fail" || status === "no" || status === "missing" || status === false;
+        const color = isPass ? "text-green-400" : isFail ? "text-orange-400" : "text-gray-400";
+        const icon = isPass ? "✓" : isFail ? "⚠" : "?";
+        const statusText = isPass ? "Present" : isFail ? "Missing" : "N/A";
 
         return `
-            <div class="metric-row" style="--metric-color: ${isPass ? '#22c55e' : '#f59e0b'};">
+            <div class="metric-row" style="--metric-color: ${isPass ? '#22c55e' : isFail ? '#f59e0b' : '#9ca3af'};">
                 <div class="flex items-center gap-3">
                     <span class="text-xl">${check.icon}</span>
                     <span class="font-semibold">${check.name}</span>
                 </div>
-                <span class="font-bold ${color}">${icon} ${isPass ? 'Present' : 'Missing'}</span>
+                <span class="font-bold ${color}">${icon} ${statusText}</span>
             </div>
         `;
     }).join("");
@@ -225,7 +244,7 @@ function displayRecommendations(test) {
         container.innerHTML = `
             <div class="p-6 bg-green-500/10 border-l-4 border-green-500 rounded-lg">
                 <h4 class="font-bold text-green-400 mb-2">✓ Excellent Job!</h4>
-                <p class="text-gray-400">No critical issues found. Your website is performing well!</p>
+                <p class="text-gray-400">No recommendations at this time. Your website is performing well!</p>
             </div>
         `;
         return;
@@ -251,9 +270,9 @@ function displayRecommendations(test) {
 
         return `
             <div class="p-6 bg-${bgColor} border-l-4 rounded-lg" style="border-left-color: ${borderColor};">
-                <h4 class="font-bold text-${textColor} mb-2">${icon} ${rec.title}</h4>
-                <p class="text-gray-400 mb-3">${rec.description}</p>
-                <p class="text-sm text-gray-500"><strong>Action:</strong> ${rec.action}</p>
+                <h4 class="font-bold text-${textColor} mb-2">${icon} ${rec.title || "Recommendation"}</h4>
+                <p class="text-gray-400 mb-3">${rec.description || "N/A"}</p>
+                <p class="text-sm text-gray-500"><strong>Action:</strong> ${rec.action || "N/A"}</p>
             </div>
         `;
     }).join("");
@@ -261,6 +280,9 @@ function displayRecommendations(test) {
 
 // ================= GET RATING =================
 function getRating(score) {
+    if (!score || score === 0) {
+        return { label: "N/A", color: "text-gray-400" };
+    }
     if (score >= 80) {
         return { label: "Excellent", color: "text-green-400" };
     } else if (score >= 60) {

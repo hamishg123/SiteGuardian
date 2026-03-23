@@ -37,8 +37,12 @@ auth.onAuthStateChanged(async user => {
 // ================= LOAD DASHBOARD DATA =================
 async function loadDashboardData(userId) {
     try {
+        console.log("Loading dashboard data for user:", userId);
+        
         const testsRef = db.collection("users").doc(userId).collection("tests");
         const snapshot = await testsRef.orderBy("timestamp", "desc").get();
+
+        console.log("Tests found:", snapshot.size);
 
         allTests = [];
         let totalSecurityScore = 0;
@@ -47,6 +51,7 @@ async function loadDashboardData(userId) {
 
         snapshot.forEach(doc => {
             const data = doc.data();
+            console.log("Test data:", data);
             allTests.push({
                 id: doc.id,
                 ...data
@@ -56,14 +61,21 @@ async function loadDashboardData(userId) {
             totalSeoScore += data.seoScore || 0;
         });
 
-        // Calculate and display real averages
+        console.log("All tests:", allTests);
+
+        // Calculate and display real averages only if tests exist
         if (allTests.length > 0) {
             const avgSecurity = Math.round(totalSecurityScore / allTests.length);
             const avgPerformance = Math.round(totalPerformanceScore / allTests.length);
             const avgSeo = Math.round(totalSeoScore / allTests.length);
 
+            console.log("Averages - Security:", avgSecurity, "Performance:", avgPerformance, "SEO:", avgSeo);
+
             // Update health score circles
             updateHealthScores(avgSecurity, avgPerformance, avgSeo);
+        } else {
+            // Show N/A for no tests
+            updateHealthScores(0, 0, 0, true);
         }
 
         // Render test results
@@ -76,33 +88,34 @@ async function loadDashboardData(userId) {
 
     } catch (err) {
         console.error("Error loading dashboard:", err);
+        alert("Error loading dashboard: " + err.message);
     }
 }
 
 // ================= UPDATE HEALTH SCORES =================
-function updateHealthScores(security, performance, seo) {
+function updateHealthScores(security, performance, seo, noData = false) {
     // Update Security Score
-    const securityPercent = (security / 100) * 100;
+    const securityPercent = noData ? 0 : (security / 100) * 100;
     const securityCircle = document.querySelector('[style*="--score-color: #ef4444"]');
     if (securityCircle) {
         securityCircle.style.setProperty('--score-percent', securityPercent);
-        document.getElementById("securityScoreValue").innerText = security;
+        document.getElementById("securityScoreValue").innerText = noData ? "N/A" : security;
     }
 
     // Update Performance Score
-    const performancePercent = (performance / 100) * 100;
+    const performancePercent = noData ? 0 : (performance / 100) * 100;
     const performanceCircle = document.querySelector('[style*="--score-color: #3b82f6"]');
     if (performanceCircle) {
         performanceCircle.style.setProperty('--score-percent', performancePercent);
-        document.getElementById("performanceScoreValue").innerText = performance;
+        document.getElementById("performanceScoreValue").innerText = noData ? "N/A" : performance;
     }
 
     // Update SEO Score
-    const seoPercent = (seo / 100) * 100;
+    const seoPercent = noData ? 0 : (seo / 100) * 100;
     const seoCircle = document.querySelector('[style*="--score-color: #8b5cf6"]');
     if (seoCircle) {
         seoCircle.style.setProperty('--score-percent', seoPercent);
-        document.getElementById("seoScoreValue").innerText = seo;
+        document.getElementById("seoScoreValue").innerText = noData ? "N/A" : seo;
     }
 }
 
@@ -122,7 +135,7 @@ function renderTestResults(tests) {
 
     const visibleTests = tests.slice(0, displayedTests);
     
-    testsList.innerHTML = visibleTests.map(test => {
+    let html = visibleTests.map(test => {
         const date = new Date(test.timestamp).toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'short',
@@ -131,31 +144,35 @@ function renderTestResults(tests) {
             minute: '2-digit'
         });
 
-        const securityRating = getRating(test.securityScore);
-        const seoRating = getRating(test.seoScore);
-        const performanceRating = getRating(test.performanceScore);
+        const securityScore = test.securityScore || 0;
+        const seoScore = test.seoScore || 0;
+        const performanceScore = test.performanceScore || 0;
+
+        const securityRating = getRating(securityScore);
+        const seoRating = getRating(seoScore);
+        const performanceRating = getRating(performanceScore);
 
         return `
             <div class="p-6 bg-white/5 rounded-2xl border border-white/10 hover:border-green-500/30 transition-all hover:bg-white/8 cursor-pointer" onclick="viewTestDetails('${test.id}')">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
                     <div class="flex-1">
-                        <h3 class="font-bold text-lg mb-2 truncate hover:text-green-400 transition-colors">${test.url}</h3>
+                        <h3 class="font-bold text-lg mb-2 truncate hover:text-green-400 transition-colors">${test.url || 'N/A'}</h3>
                         <p class="text-sm text-gray-500">${date}</p>
                     </div>
                     <div class="grid grid-cols-3 gap-6">
                         <div class="text-center">
                             <p class="text-xs text-gray-400 mb-2 uppercase tracking-wider font-semibold">Security</p>
-                            <p class="text-3xl font-black ${securityRating.color}">${test.securityScore}</p>
+                            <p class="text-3xl font-black ${securityRating.color}">${securityScore || 'N/A'}</p>
                             <p class="text-xs text-gray-500 mt-1">${securityRating.label}</p>
                         </div>
                         <div class="text-center">
                             <p class="text-xs text-gray-400 mb-2 uppercase tracking-wider font-semibold">SEO</p>
-                            <p class="text-3xl font-black ${seoRating.color}">${test.seoScore}</p>
+                            <p class="text-3xl font-black ${seoRating.color}">${seoScore || 'N/A'}</p>
                             <p class="text-xs text-gray-500 mt-1">${seoRating.label}</p>
                         </div>
                         <div class="text-center">
                             <p class="text-xs text-gray-400 mb-2 uppercase tracking-wider font-semibold">Performance</p>
-                            <p class="text-3xl font-black ${performanceRating.color}">${test.performanceScore}</p>
+                            <p class="text-3xl font-black ${performanceRating.color}">${performanceScore || 'N/A'}</p>
                             <p class="text-xs text-gray-500 mt-1">${performanceRating.label}</p>
                         </div>
                     </div>
@@ -163,6 +180,8 @@ function renderTestResults(tests) {
             </div>
         `;
     }).join("");
+
+    testsList.innerHTML = html;
 
     // Add Load More button if there are more tests
     if (tests.length > displayedTests) {
@@ -191,6 +210,9 @@ function viewTestDetails(testId) {
 
 // ================= GET RATING =================
 function getRating(score) {
+    if (!score || score === 0) {
+        return { label: "N/A", color: "text-gray-400" };
+    }
     if (score >= 80) {
         return { label: "Excellent", color: "text-green-400" };
     } else if (score >= 60) {
@@ -208,13 +230,16 @@ function initCharts(tests) {
 
     // Prepare data
     const labels = tests.slice(0, 10).reverse().map((test, idx) => `Test ${idx + 1}`);
-    const securityData = tests.slice(0, 10).reverse().map(test => test.securityScore);
-    const performanceData = tests.slice(0, 10).reverse().map(test => test.performanceScore);
+    const securityData = tests.slice(0, 10).reverse().map(test => test.securityScore || 0);
+    const performanceData = tests.slice(0, 10).reverse().map(test => test.performanceScore || 0);
 
     // Security Chart
     const securityCtx = document.getElementById("securityChart");
     if (securityCtx) {
-        securityChart = new Chart(securityCtx, {
+        if (window.securityChart) {
+            window.securityChart.destroy();
+        }
+        window.securityChart = new Chart(securityCtx, {
             type: "line",
             data: {
                 labels: labels,
@@ -265,7 +290,10 @@ function initCharts(tests) {
     // Performance Chart
     const performanceCtx = document.getElementById("performanceChart");
     if (performanceCtx) {
-        performanceChart = new Chart(performanceCtx, {
+        if (window.performanceChart) {
+            window.performanceChart.destroy();
+        }
+        window.performanceChart = new Chart(performanceCtx, {
             type: "line",
             data: {
                 labels: labels,
