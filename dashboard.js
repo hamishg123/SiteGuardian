@@ -15,6 +15,8 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 let securityChart, performanceChart;
+let allTests = [];
+let displayedTests = 5;
 
 // ================= AUTH CHECK =================
 auth.onAuthStateChanged(async user => {
@@ -38,14 +40,14 @@ async function loadDashboardData(userId) {
         const testsRef = db.collection("users").doc(userId).collection("tests");
         const snapshot = await testsRef.orderBy("timestamp", "desc").get();
 
-        const tests = [];
+        allTests = [];
         let totalSecurityScore = 0;
         let totalPerformanceScore = 0;
         let totalSeoScore = 0;
 
         snapshot.forEach(doc => {
             const data = doc.data();
-            tests.push({
+            allTests.push({
                 id: doc.id,
                 ...data
             });
@@ -54,16 +56,53 @@ async function loadDashboardData(userId) {
             totalSeoScore += data.seoScore || 0;
         });
 
+        // Calculate and display real averages
+        if (allTests.length > 0) {
+            const avgSecurity = Math.round(totalSecurityScore / allTests.length);
+            const avgPerformance = Math.round(totalPerformanceScore / allTests.length);
+            const avgSeo = Math.round(totalSeoScore / allTests.length);
+
+            // Update health score circles
+            updateHealthScores(avgSecurity, avgPerformance, avgSeo);
+        }
+
         // Render test results
-        renderTestResults(tests);
+        renderTestResults(allTests);
 
         // Initialize charts
-        if (tests.length > 0) {
-            initCharts(tests);
+        if (allTests.length > 0) {
+            initCharts(allTests);
         }
 
     } catch (err) {
         console.error("Error loading dashboard:", err);
+    }
+}
+
+// ================= UPDATE HEALTH SCORES =================
+function updateHealthScores(security, performance, seo) {
+    // Update Security Score
+    const securityPercent = (security / 100) * 100;
+    const securityCircle = document.querySelector('[style*="--score-color: #ef4444"]');
+    if (securityCircle) {
+        securityCircle.style.setProperty('--score-percent', securityPercent);
+        document.getElementById("securityScoreValue").innerText = security;
+    }
+
+    // Update Performance Score
+    const performancePercent = (performance / 100) * 100;
+    const performanceCircle = document.querySelector('[style*="--score-color: #3b82f6"]');
+    if (performanceCircle) {
+        performanceCircle.style.setProperty('--score-percent', performancePercent);
+        document.getElementById("performanceScoreValue").innerText = performance;
+    }
+
+    // Update SEO Score
+    const seoPercent = (seo / 100) * 100;
+    const seoCircle = document.querySelector('[style*="--score-color: #8b5cf6"]');
+    if (seoCircle) {
+        seoCircle.style.setProperty('--score-percent', seoPercent);
+        document.getElementById("seoScoreValue").innerText = seo;
     }
 }
 
@@ -81,7 +120,9 @@ function renderTestResults(tests) {
         return;
     }
 
-    testsList.innerHTML = tests.slice(0, 5).map(test => {
+    const visibleTests = tests.slice(0, displayedTests);
+    
+    testsList.innerHTML = visibleTests.map(test => {
         const date = new Date(test.timestamp).toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'short',
@@ -95,10 +136,10 @@ function renderTestResults(tests) {
         const performanceRating = getRating(test.performanceScore);
 
         return `
-            <div class="p-6 bg-white/5 rounded-2xl border border-white/10 hover:border-green-500/30 transition-all hover:bg-white/8">
+            <div class="p-6 bg-white/5 rounded-2xl border border-white/10 hover:border-green-500/30 transition-all hover:bg-white/8 cursor-pointer" onclick="viewTestDetails('${test.id}')">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
                     <div class="flex-1">
-                        <h3 class="font-bold text-lg mb-2 truncate">${test.url}</h3>
+                        <h3 class="font-bold text-lg mb-2 truncate hover:text-green-400 transition-colors">${test.url}</h3>
                         <p class="text-sm text-gray-500">${date}</p>
                     </div>
                     <div class="grid grid-cols-3 gap-6">
@@ -122,6 +163,30 @@ function renderTestResults(tests) {
             </div>
         `;
     }).join("");
+
+    // Add Load More button if there are more tests
+    if (tests.length > displayedTests) {
+        testsList.innerHTML += `
+            <div class="flex justify-center mt-8">
+                <button onclick="loadMoreTests()" class="px-8 py-3 rounded-lg border border-green-500/50 text-green-400 font-semibold hover:bg-green-500/10 transition-all">
+                    Load More Tests (${tests.length - displayedTests} remaining)
+                </button>
+            </div>
+        `;
+    }
+}
+
+// ================= LOAD MORE TESTS =================
+function loadMoreTests() {
+    displayedTests += 5;
+    renderTestResults(allTests);
+}
+
+// ================= VIEW TEST DETAILS =================
+function viewTestDetails(testId) {
+    // Store the test ID in sessionStorage to pass to report.html
+    sessionStorage.setItem('selectedTestId', testId);
+    window.location.href = `report.html?testId=${testId}`;
 }
 
 // ================= GET RATING =================

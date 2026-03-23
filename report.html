@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Report - SiteGuardian</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0f0f1e 100%); }
+        
+        .glass { 
+            background: rgba(255, 255, 255, 0.05); 
+            backdrop-filter: blur(20px); 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        .glass-hover { transition: all 0.3s ease; }
+        .glass-hover:hover { 
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(74, 222, 128, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .gradient-text { background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .gradient-bg { background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); }
+        
+        .score-circle {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.5rem;
+            font-weight: 900;
+            background: conic-gradient(var(--score-color) 0deg, var(--score-color) calc(var(--score-percent) * 3.6deg), rgba(255, 255, 255, 0.05) calc(var(--score-percent) * 3.6deg) 360deg);
+            position: relative;
+            box-shadow: 0 0 40px rgba(74, 222, 128, 0.2);
+        }
+        
+        .score-circle::after {
+            content: '';
+            position: absolute;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1e 100%);
+        }
+        
+        .score-value {
+            position: relative;
+            z-index: 10;
+            color: var(--score-color);
+        }
+        
+        .metric-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 0.75rem;
+            margin-bottom: 0.75rem;
+            border-left: 4px solid var(--metric-color);
+        }
+        
+        .hidden { display: none; }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
+        ::-webkit-scrollbar-thumb { background: rgba(74, 222, 128, 0.3); border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-[#0a0a0a] via-[#1a1a2e] to-[#0f0f1e] text-gray-100 overflow-x-hidden">
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 glass border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center shadow-lg">
+                        <svg class="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                    </div>
+                    <span class="text-2xl font-black tracking-tight">Site<span class="gradient-text">Guardian</span></span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <a href="dashboard.html" class="px-4 py-2 rounded-lg border border-white/20 text-white font-semibold text-sm hover:bg-white/5 transition-all">← Back to Dashboard</a>
+                    <button id="signOutBtn" class="px-4 py-2 rounded-lg border border-white/20 text-white font-semibold text-sm hover:bg-white/5 transition-all">Sign out</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="pt-24 pb-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Header -->
+            <div class="mb-12">
+                <h1 class="text-5xl font-black mb-2" id="reportUrl">Loading...</h1>
+                <p class="text-gray-400 text-lg" id="reportDate">Test Date: Loading...</p>
+            </div>
+
+            <!-- Score Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                <!-- Security Score -->
+                <div class="glass p-10 rounded-3xl text-center glass-hover">
+                    <h3 class="text-gray-400 mb-8 font-semibold uppercase tracking-wider">Security Score</h3>
+                    <div class="flex justify-center mb-6">
+                        <div class="score-circle" id="securityScoreCircle" style="--score-color: #ef4444; --score-percent: 85;">
+                            <div class="score-value" id="securityScoreValue">85</div>
+                        </div>
+                    </div>
+                    <p class="text-green-400 font-bold text-lg mb-6" id="securityRating">Excellent</p>
+                </div>
+
+                <!-- Performance Score -->
+                <div class="glass p-10 rounded-3xl text-center glass-hover">
+                    <h3 class="text-gray-400 mb-8 font-semibold uppercase tracking-wider">Performance Score</h3>
+                    <div class="flex justify-center mb-6">
+                        <div class="score-circle" id="performanceScoreCircle" style="--score-color: #3b82f6; --score-percent: 78;">
+                            <div class="score-value" id="performanceScoreValue">78</div>
+                        </div>
+                    </div>
+                    <p class="text-yellow-400 font-bold text-lg mb-6" id="performanceRating">Good</p>
+                </div>
+
+                <!-- SEO Score -->
+                <div class="glass p-10 rounded-3xl text-center glass-hover">
+                    <h3 class="text-gray-400 mb-8 font-semibold uppercase tracking-wider">SEO Score</h3>
+                    <div class="flex justify-center mb-6">
+                        <div class="score-circle" id="seoScoreCircle" style="--score-color: #8b5cf6; --score-percent: 92;">
+                            <div class="score-value" id="seoScoreValue">92</div>
+                        </div>
+                    </div>
+                    <p class="text-green-400 font-bold text-lg mb-6" id="seoRating">Excellent</p>
+                </div>
+            </div>
+
+            <!-- Security Metrics -->
+            <div class="glass p-8 rounded-3xl glass-hover mb-12">
+                <h3 class="text-2xl font-bold mb-6">Security Vulnerabilities</h3>
+                <div id="securityMetrics" class="space-y-3">
+                    <!-- Metrics will be populated here -->
+                </div>
+            </div>
+
+            <!-- Performance Metrics -->
+            <div class="glass p-8 rounded-3xl glass-hover mb-12">
+                <h3 class="text-2xl font-bold mb-6">Performance Metrics</h3>
+                <div id="performanceMetrics" class="space-y-3">
+                    <!-- Metrics will be populated here -->
+                </div>
+            </div>
+
+            <!-- SEO Metrics -->
+            <div class="glass p-8 rounded-3xl glass-hover mb-12">
+                <h3 class="text-2xl font-bold mb-6">SEO Optimization</h3>
+                <div id="seoMetrics" class="space-y-3">
+                    <!-- Metrics will be populated here -->
+                </div>
+            </div>
+
+            <!-- Detailed Recommendations -->
+            <div class="glass p-8 rounded-3xl glass-hover">
+                <h3 class="text-2xl font-bold mb-6">Detailed Recommendations</h3>
+                <div id="recommendations" class="space-y-4">
+                    <!-- Recommendations will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="report.js"></script>
+</body>
+</html>
