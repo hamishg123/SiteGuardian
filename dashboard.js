@@ -25,11 +25,14 @@ auth.onAuthStateChanged(async user => {
         return;
     }
 
-    document.getElementById("signOutBtn").onclick = () => {
-        auth.signOut().then(() => {
-            window.location.href = "index.html";
-        });
-    };
+    const signOutBtn = document.getElementById("signOutBtn");
+    if (signOutBtn) {
+        signOutBtn.onclick = () => {
+            auth.signOut().then(() => {
+                window.location.href = "index.html";
+            });
+        };
+    }
 
     await loadDashboardData(user.uid);
 });
@@ -94,34 +97,67 @@ async function loadDashboardData(userId) {
 
 // ================= UPDATE HEALTH SCORES =================
 function updateHealthScores(security, performance, seo, noData = false) {
-    // Update Security Score
-    const securityPercent = noData ? 0 : (security / 100) * 100;
-    const securityCircle = document.querySelector('[style*="--score-color: #ef4444"]');
-    if (securityCircle) {
-        securityCircle.style.setProperty('--score-percent', securityPercent);
-        document.getElementById("securityScoreValue").innerText = noData ? "N/A" : security;
-    }
+    try {
+        // Update Security Score
+        const securityPercent = noData ? 0 : (security / 100) * 100;
+        const securityCircle = document.getElementById("securityScoreCircle");
+        const securityValue = document.getElementById("securityScoreValue");
+        const securityRating = document.getElementById("securityRating");
+        
+        if (securityCircle) {
+            securityCircle.style.setProperty('--score-percent', securityPercent);
+        }
+        if (securityValue) {
+            securityValue.innerText = noData ? "N/A" : security;
+        }
+        if (securityRating) {
+            securityRating.innerText = noData ? "N/A" : "Excellent";
+        }
 
-    // Update Performance Score
-    const performancePercent = noData ? 0 : (performance / 100) * 100;
-    const performanceCircle = document.querySelector('[style*="--score-color: #3b82f6"]');
-    if (performanceCircle) {
-        performanceCircle.style.setProperty('--score-percent', performancePercent);
-        document.getElementById("performanceScoreValue").innerText = noData ? "N/A" : performance;
-    }
+        // Update Performance Score
+        const performancePercent = noData ? 0 : (performance / 100) * 100;
+        const performanceCircle = document.getElementById("performanceScoreCircle");
+        const performanceValue = document.getElementById("performanceScoreValue");
+        const performanceRatingEl = document.getElementById("performanceRating");
+        
+        if (performanceCircle) {
+            performanceCircle.style.setProperty('--score-percent', performancePercent);
+        }
+        if (performanceValue) {
+            performanceValue.innerText = noData ? "N/A" : performance;
+        }
+        if (performanceRatingEl) {
+            performanceRatingEl.innerText = noData ? "N/A" : "Good";
+        }
 
-    // Update SEO Score
-    const seoPercent = noData ? 0 : (seo / 100) * 100;
-    const seoCircle = document.querySelector('[style*="--score-color: #8b5cf6"]');
-    if (seoCircle) {
-        seoCircle.style.setProperty('--score-percent', seoPercent);
-        document.getElementById("seoScoreValue").innerText = noData ? "N/A" : seo;
+        // Update SEO Score
+        const seoPercent = noData ? 0 : (seo / 100) * 100;
+        const seoCircle = document.getElementById("seoScoreCircle");
+        const seoValue = document.getElementById("seoScoreValue");
+        const seoRating = document.getElementById("seoRating");
+        
+        if (seoCircle) {
+            seoCircle.style.setProperty('--score-percent', seoPercent);
+        }
+        if (seoValue) {
+            seoValue.innerText = noData ? "N/A" : seo;
+        }
+        if (seoRating) {
+            seoRating.innerText = noData ? "N/A" : "Excellent";
+        }
+    } catch (err) {
+        console.error("Error updating health scores:", err);
     }
 }
 
 // ================= RENDER TEST RESULTS =================
 function renderTestResults(tests) {
     const testsList = document.getElementById("testsList");
+    
+    if (!testsList) {
+        console.error("testsList element not found");
+        return;
+    }
     
     if (tests.length === 0) {
         testsList.innerHTML = `
