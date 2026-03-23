@@ -3,51 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SiteGuardian | AI-Powered Website Testing</title>
+    <title>SiteGuardian | AI-Powered Website Testing & Security Audits</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://js.stripe.com/v3/"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .glass-dark { background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        * { font-family: 'Inter', sans-serif; }
+        body { background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0f0f1e 100%); }
+        
+        /* Premium Glassmorphism */
+        .glass { 
+            background: rgba(255, 255, 255, 0.05); 
+            backdrop-filter: blur(20px); 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        .glass-dark { 
+            background: rgba(0, 0, 0, 0.5); 
+            backdrop-filter: blur(20px); 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .glass-hover { transition: all 0.3s ease; }
+        .glass-hover:hover { 
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(74, 222, 128, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        /* Gradients */
         .gradient-text { background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .gradient-bg { background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); }
         .gradient-border { background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); padding: 1px; }
+        
+        /* Animations */
         .modal-overlay { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); }
         .modal-content { animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .floating-badge { animation: float 3s ease-in-out infinite; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideInLeft { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideInRight { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
-        .glow { box-shadow: 0 0 20px rgba(74, 222, 128, 0.3); }
+        @keyframes glow-pulse { 0%, 100% { box-shadow: 0 0 20px rgba(74, 222, 128, 0.3); } 50% { box-shadow: 0 0 40px rgba(74, 222, 128, 0.6); } }
+        
+        .animate-fade { animation: fadeIn 0.6s ease-out; }
+        .animate-slide-left { animation: slideInLeft 0.6s ease-out; }
+        .animate-slide-right { animation: slideInRight 0.6s ease-out; }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+        .animate-glow { animation: glow-pulse 2s ease-in-out infinite; }
+        
+        /* Utility */
         .hidden { display: none; }
-        .plan-card-selected { border-color: rgba(74, 222, 128, 0.8) !important; background-color: rgba(74, 222, 128, 0.1) !important; }
+        .glow { box-shadow: 0 0 20px rgba(74, 222, 128, 0.3); }
+        .glow-lg { box-shadow: 0 0 40px rgba(74, 222, 128, 0.4); }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
+        ::-webkit-scrollbar-thumb { background: rgba(74, 222, 128, 0.3); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(74, 222, 128, 0.5); }
+        
+        /* Feature Cards */
+        .feature-card {
+            position: relative;
+            overflow: hidden;
+        }
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(74, 222, 128, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+        .feature-card:hover::before {
+            left: 100%;
+        }
+        
+        /* Stat Numbers */
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
     </style>
 </head>
-<body class="bg-[#0a0a0a] text-gray-100 selection:bg-green-500/30">
+<body class="bg-gradient-to-br from-[#0a0a0a] via-[#1a1a2e] to-[#0f0f1e] text-gray-100 selection:bg-green-500/30 overflow-x-hidden">
 
     <!-- Navigation -->
     <nav class="fixed top-0 w-full z-50 glass border-b border-white/5">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
-                        <svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                <div class="flex items-center gap-3 animate-fade">
+                    <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center shadow-lg">
+                        <svg class="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
                     </div>
-                    <span class="text-xl font-bold tracking-tight">Site<span class="gradient-text">Guardian</span></span>
+                    <span class="text-2xl font-black tracking-tight">Site<span class="gradient-text">Guardian</span></span>
                 </div>
                 <div class="flex items-center gap-6">
-                    <div id="creditDisplay" class="hidden px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-sm font-medium">
-                        Tests: <span id="creditsNumber">0</span>
+                    <div id="creditDisplay" class="hidden px-4 py-2 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-sm font-semibold">
+                        <span class="text-green-300">⚡</span> <span id="creditsNumber">0</span> Tests
                     </div>
-                    <button id="loginBtn" class="px-4 py-2 rounded-lg bg-white text-black font-semibold text-sm hover:bg-gray-200 transition-colors">Sign in</button>
+                    <button id="loginBtn" class="px-5 py-2.5 rounded-lg bg-white text-black font-bold text-sm hover:bg-gray-100 transition-all shadow-lg">Sign in</button>
                     <div id="userMenu" class="hidden flex items-center gap-4">
-                        <a href="dashboard.html" class="px-4 py-2 rounded-lg border border-white/20 text-white font-semibold text-sm hover:bg-white/5 transition-colors">Dashboard</a>
-                        <img id="profilePic" class="w-9 h-9 rounded-full border border-white/10" alt="Profile" />
-                        <button id="signOutBtn" class="px-4 py-2 rounded-lg border border-white/20 text-white font-semibold text-sm hover:bg-white/5 transition-colors">Sign out</button>
+                        <a href="dashboard.html" class="px-4 py-2 rounded-lg border border-white/20 text-white font-semibold text-sm hover:bg-white/5 transition-all">Dashboard</a>
+                        <img id="profilePic" class="w-10 h-10 rounded-full border-2 border-green-500/30 shadow-lg" alt="Profile" />
+                        <button id="signOutBtn" class="px-4 py-2 rounded-lg border border-white/20 text-white font-semibold text-sm hover:bg-white/5 transition-all">Sign out</button>
                     </div>
                 </div>
             </div>
@@ -55,201 +124,320 @@
     </nav>
 
     <!-- Hero Section -->
-    <section class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
-        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10">
-            <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-green-500/10 blur-[120px] rounded-full"></div>
-            <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-green-500/5 blur-[120px] rounded-full"></div>
+    <section class="relative pt-32 pb-24 lg:pt-48 lg:pb-40 overflow-hidden">
+        <div class="absolute inset-0 -z-10">
+            <div class="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-green-500/15 blur-[150px] rounded-full"></div>
+            <div class="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-green-500/10 blur-[150px] rounded-full"></div>
+            <div class="absolute top-1/2 left-1/2 w-[40%] h-[40%] bg-blue-500/5 blur-[150px] rounded-full"></div>
         </div>
         
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <div class="inline-block mb-6 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/30 text-green-400 text-xs font-bold uppercase tracking-wider">🚀 30-Day Money-Back Guarantee</div>
-            
-            <h1 class="text-5xl lg:text-7xl font-extrabold tracking-tight mb-6">
-                AI-Powered Website <span class="gradient-text">Testing</span>
-            </h1>
-            <p class="text-lg lg:text-xl text-gray-400 max-w-2xl mx-auto mb-10">
-                Automatically test your website for vulnerabilities, broken buttons, forms, and SEO issues using advanced AI agents that browse like real users. Identify security risks and optimization opportunities before your customers do.
-            </p>
-            
-            <div class="max-w-xl mx-auto glass p-2 rounded-2xl flex flex-col sm:flex-row gap-2">
-                <input id="urlInput" type="url" placeholder="https://yourwebsite.com" class="flex-1 bg-transparent border-none focus:ring-0 px-4 py-3 text-white placeholder-gray-500" />
-                <button id="testBtn" class="gradient-bg text-black font-bold px-8 py-3 rounded-xl hover:opacity-90 transition-opacity whitespace-nowrap">
-                    Run Free Test
-                </button>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <!-- Left Content -->
+                <div class="animate-slide-left">
+                    <div class="inline-block mb-6 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/30 text-green-400 text-xs font-bold uppercase tracking-wider">🚀 30-Day Money-Back Guarantee</div>
+                    
+                    <h1 class="text-6xl lg:text-7xl font-black tracking-tight mb-6 leading-tight">
+                        AI-Powered Website <span class="gradient-text">Testing</span> & Security
+                    </h1>
+                    <p class="text-lg lg:text-xl text-gray-300 mb-8 leading-relaxed">
+                        Automatically test your website for vulnerabilities, broken features, and SEO issues using advanced AI agents. Get actionable insights before your customers find the problems.
+                    </p>
+                    
+                    <div class="flex flex-col sm:flex-row gap-4 mb-8">
+                        <button onclick="document.getElementById('urlInput').focus()" class="px-8 py-4 gradient-bg text-black font-bold rounded-xl hover:opacity-90 transition-all shadow-lg hover:shadow-xl transform hover:scale-105">
+                            Start Free Test
+                        </button>
+                        <a href="#pricing" class="px-8 py-4 border border-white/20 text-white font-bold rounded-xl hover:bg-white/5 transition-all">
+                            View Plans
+                        </a>
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="glass p-4 rounded-lg">
+                            <div class="stat-number">99.9%</div>
+                            <p class="text-gray-400 text-sm">Uptime</p>
+                        </div>
+                        <div class="glass p-4 rounded-lg">
+                            <div class="stat-number">5M+</div>
+                            <p class="text-gray-400 text-sm">Tests/Day</p>
+                        </div>
+                        <div class="glass p-4 rounded-lg">
+                            <div class="stat-number">24/7</div>
+                            <p class="text-gray-400 text-sm">Support</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right - Test Input -->
+                <div class="animate-slide-right">
+                    <div class="glass p-8 rounded-3xl">
+                        <h3 class="text-2xl font-bold mb-6">Run Your First Test</h3>
+                        <div class="space-y-4">
+                            <input id="urlInput" type="url" placeholder="https://yourwebsite.com" class="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all" />
+                            <button id="testBtn" class="w-full py-4 gradient-bg text-black font-bold rounded-xl hover:opacity-90 transition-all shadow-lg">
+                                Run Free Test
+                            </button>
+                            <p id="testsLeft" class="text-sm text-gray-400 text-center"></p>
+                            <p id="result" class="text-green-400 font-medium text-center"></p>
+                        </div>
+                    </div>
+                </div>
             </div>
-            
-            <p id="testsLeft" class="mt-4 text-sm text-gray-500"></p>
-            <p id="result" class="mt-6 text-green-400 font-medium"></p>
         </div>
     </section>
 
-    <!-- Features Section -->
-    <section class="py-20 bg-white/[0.02]">
+    <!-- Quick Features -->
+    <section class="py-20 relative">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="glass p-8 rounded-3xl hover:border-green-500/30 transition-colors group">
-                    <div class="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                        <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3">AI Browser Testing</h3>
-                    <p class="text-gray-400 leading-relaxed">AI agents simulate real users and explore your site to find hidden errors, vulnerabilities, and UX issues.</p>
-                </div>
-                
-                <div class="glass p-8 rounded-3xl hover:border-green-500/30 transition-colors group">
-                    <div class="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                        <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+            <h2 class="text-4xl font-black mb-12 text-center">What We Test</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass p-8 rounded-2xl feature-card glass-hover group">
+                    <div class="w-14 h-14 rounded-2xl bg-red-500/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <svg class="w-7 h-7 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                     </div>
                     <h3 class="text-xl font-bold mb-3">Security Vulnerabilities</h3>
-                    <p class="text-gray-400 leading-relaxed">Automatically detect security flaws, exposed APIs, and vulnerabilities that could compromise your site.</p>
+                    <p class="text-gray-400">SQL injection, XSS, CSRF, exposed APIs, SSL/TLS issues, and more.</p>
                 </div>
                 
-                <div class="glass p-8 rounded-3xl hover:border-green-500/30 transition-colors group">
-                    <div class="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                        <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                <div class="glass p-8 rounded-2xl feature-card glass-hover group">
+                    <div class="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <svg class="w-7 h-7 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Performance & Speed</h3>
+                    <p class="text-gray-400">Page load times, Core Web Vitals, image optimization, and caching.</p>
+                </div>
+                
+                <div class="glass p-8 rounded-2xl feature-card glass-hover group">
+                    <div class="w-14 h-14 rounded-2xl bg-amber-500/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <svg class="w-7 h-7 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     </div>
                     <h3 class="text-xl font-bold mb-3">SEO Optimization</h3>
-                    <p class="text-gray-400 leading-relaxed">Get detailed SEO analysis including meta tags, performance metrics, and recommendations for better rankings.</p>
+                    <p class="text-gray-400">Meta tags, mobile responsiveness, sitemap, robots.txt, and rankings.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Trust Section -->
-    <section class="py-16 border-t border-white/5">
+    <!-- Advanced Features Section -->
+    <section class="py-20 bg-white/[0.02]">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
-                <div>
-                    <div class="text-3xl font-bold gradient-text mb-2">99.9%</div>
-                    <p class="text-gray-400">Uptime Guarantee</p>
+            <h2 class="text-4xl font-black mb-16 text-center">Powerful Features</h2>
+            <div class="grid lg:grid-cols-2 gap-12">
+                <!-- Feature 1 -->
+                <div class="glass p-10 rounded-3xl glass-hover">
+                    <div class="flex items-start gap-6">
+                        <div class="w-16 h-16 rounded-2xl bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold mb-3">AI Browser Testing</h3>
+                            <p class="text-gray-400 mb-4">Advanced AI agents simulate real users, clicking buttons, filling forms, and exploring your site to find hidden issues.</p>
+                            <ul class="space-y-2 text-sm text-gray-300">
+                                <li>✓ Real user behavior simulation</li>
+                                <li>✓ Interactive element testing</li>
+                                <li>✓ Form validation checks</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <div class="text-3xl font-bold gradient-text mb-2">5M+</div>
-                    <p class="text-gray-400">Tests Run Daily</p>
+
+                <!-- Feature 2 -->
+                <div class="glass p-10 rounded-3xl glass-hover">
+                    <div class="flex items-start gap-6">
+                        <div class="w-16 h-16 rounded-2xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold mb-3">Detailed Analytics</h3>
+                            <p class="text-gray-400 mb-4">Get comprehensive reports with security scores, performance metrics, and SEO insights for every test.</p>
+                            <ul class="space-y-2 text-sm text-gray-300">
+                                <li>✓ Real-time dashboards</li>
+                                <li>✓ Historical trend analysis</li>
+                                <li>✓ Actionable recommendations</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <div class="text-3xl font-bold gradient-text mb-2">2s</div>
-                    <p class="text-gray-400">Average Response Time</p>
+
+                <!-- Feature 3 -->
+                <div class="glass p-10 rounded-3xl glass-hover">
+                    <div class="flex items-start gap-6">
+                        <div class="w-16 h-16 rounded-2xl bg-purple-500/10 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold mb-3">Competitor Comparison</h3>
+                            <p class="text-gray-400 mb-4">Compare your security, performance, and SEO scores against competitors to stay ahead.</p>
+                            <ul class="space-y-2 text-sm text-gray-300">
+                                <li>✓ Benchmark against competitors</li>
+                                <li>✓ Identify competitive advantages</li>
+                                <li>✓ Track market positioning</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <div class="text-3xl font-bold gradient-text mb-2">24/7</div>
-                    <p class="text-gray-400">Expert Support</p>
+
+                <!-- Feature 4 -->
+                <div class="glass p-10 rounded-3xl glass-hover">
+                    <div class="flex items-start gap-6">
+                        <div class="w-16 h-16 rounded-2xl bg-orange-500/10 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-8 h-8 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold mb-3">Smart Alerts</h3>
+                            <p class="text-gray-400 mb-4">Get instant notifications when critical issues are detected on your website.</p>
+                            <ul class="space-y-2 text-sm text-gray-300">
+                                <li>✓ Email & SMS alerts</li>
+                                <li>✓ Custom alert rules</li>
+                                <li>✓ Priority notifications</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Pricing Section -->
-    <section class="py-24 relative overflow-hidden">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <section id="pricing" class="py-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
-                <h2 class="text-4xl font-bold mb-4">Simple, Transparent <span class="gradient-text">Pricing</span></h2>
-                <p class="text-gray-400">Choose the plan that fits your testing needs. All plans include 30-day money-back guarantee.</p>
+                <h2 class="text-5xl font-black mb-4">Simple, Transparent Pricing</h2>
+                <p class="text-xl text-gray-400">Choose the plan that fits your testing needs. All plans include 30-day money-back guarantee.</p>
             </div>
-            
+
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <!-- Starter -->
-                <div class="glass p-10 rounded-3xl flex flex-col">
-                    <h3 class="text-lg font-medium text-gray-400 mb-2">Starter</h3>
+                <!-- Starter Plan -->
+                <div class="glass p-10 rounded-3xl flex flex-col glass-hover group">
+                    <h3 class="text-2xl font-bold mb-2">Starter</h3>
                     <div class="flex items-baseline gap-1 mb-8">
-                        <span class="text-4xl font-bold">£9.99</span>
-                        <span class="text-gray-500">/month</span>
+                        <span class="text-5xl font-black gradient-text">£9.99</span>
+                        <span class="text-gray-400">/month</span>
                     </div>
                     <ul class="space-y-4 mb-10 flex-1">
                         <li class="flex items-center gap-3 text-gray-300">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                             3 Tests per day
                         </li>
                         <li class="flex items-center gap-3 text-gray-300">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                             Security Analysis
                         </li>
                         <li class="flex items-center gap-3 text-gray-300">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                             Email Alerts
                         </li>
                         <li class="flex items-center gap-3 text-gray-300">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                             30-Day Guarantee
                         </li>
                     </ul>
-                    <button onclick="checkout('price_starter')" class="w-full py-4 rounded-2xl border border-white/10 font-bold hover:bg-white hover:text-black transition-all">Get Started</button>
+                    <button onclick="checkout('price_starter')" class="w-full py-4 rounded-xl border border-white/10 font-bold hover:bg-white/5 transition-all">Get Started</button>
                 </div>
-                
-                <!-- Pro -->
-                <div class="glass p-10 rounded-3xl flex flex-col relative border-green-500/50 glow">
-                    <div class="absolute -top-4 left-1/2 -translate-x-1/2 gradient-bg text-black text-xs font-bold px-4 py-1 rounded-full uppercase tracking-wider">Most Popular</div>
-                    <h3 class="text-lg font-medium text-gray-400 mb-2">Pro</h3>
+
+                <!-- Pro Plan (Featured) -->
+                <div class="glass p-10 rounded-3xl flex flex-col glass-hover group relative ring-2 ring-green-500/50">
+                    <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-green-500 to-green-400 text-black text-xs font-black rounded-full">⭐ MOST POPULAR</div>
+                    <h3 class="text-2xl font-bold mb-2">Pro</h3>
                     <div class="flex items-baseline gap-1 mb-8">
-                        <span class="text-4xl font-bold">£35</span>
-                        <span class="text-gray-500">/month</span>
+                        <span class="text-5xl font-black gradient-text">£35</span>
+                        <span class="text-gray-400">/month</span>
                     </div>
                     <ul class="space-y-4 mb-10 flex-1">
                         <li class="flex items-center gap-3 text-gray-300">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                             15 Tests per day
                         </li>
                         <li class="flex items-center gap-3 text-gray-300">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                             SEO & Security Analysis
                         </li>
                         <li class="flex items-center gap-3 text-gray-300">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                             Detailed Reports
                         </li>
                         <li class="flex items-center gap-3 text-gray-300">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                             30-Day Guarantee
                         </li>
                     </ul>
-                    <button onclick="checkout('price_pro')" class="w-full py-4 rounded-2xl gradient-bg text-black font-bold hover:opacity-90 transition-all">Get Started</button>
+                    <button onclick="checkout('price_pro')" class="w-full py-4 rounded-xl gradient-bg text-black font-bold hover:opacity-90 transition-all shadow-lg">Get Started</button>
                 </div>
-                
-                <!-- Agency -->
-                <div class="glass p-10 rounded-3xl flex flex-col">
-                    <h3 class="text-lg font-medium text-gray-400 mb-2">Agency</h3>
+
+                <!-- Agency Plan -->
+                <div class="glass p-10 rounded-3xl flex flex-col glass-hover group">
+                    <h3 class="text-2xl font-bold mb-2">Agency</h3>
                     <div class="flex items-baseline gap-1 mb-8">
-                        <span class="text-4xl font-bold">£99</span>
-                        <span class="text-gray-500">/month</span>
+                        <span class="text-5xl font-black gradient-text">£99</span>
+                        <span class="text-gray-400">/month</span>
                     </div>
                     <ul class="space-y-4 mb-10 flex-1">
                         <li class="flex items-center gap-3 text-gray-300">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                             55 Tests per day
                         </li>
                         <li class="flex items-center gap-3 text-gray-300">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                             Full Technical Audit
                         </li>
                         <li class="flex items-center gap-3 text-gray-300">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                             Priority 24/7 Support
                         </li>
                         <li class="flex items-center gap-3 text-gray-300">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                             30-Day Guarantee
                         </li>
                     </ul>
-                    <button onclick="checkout('price_agency')" class="w-full py-4 rounded-2xl border border-white/10 font-bold hover:bg-white hover:text-black transition-all">Get Started</button>
+                    <button onclick="checkout('price_agency')" class="w-full py-4 rounded-xl border border-white/10 font-bold hover:bg-white/5 transition-all">Get Started</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trust Section -->
+    <section class="py-20 bg-white/[0.02]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-4xl font-black mb-6">Trusted by Thousands</h2>
+            <p class="text-xl text-gray-400 mb-12">Join companies that rely on SiteGuardian for website security and performance.</p>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div class="glass p-6 rounded-xl">
+                    <p class="text-3xl font-black gradient-text">100%</p>
+                    <p class="text-gray-400 mt-2">Uptime SLA</p>
+                </div>
+                <div class="glass p-6 rounded-xl">
+                    <p class="text-3xl font-black gradient-text">2s</p>
+                    <p class="text-gray-400 mt-2">Avg Response</p>
+                </div>
+                <div class="glass p-6 rounded-xl">
+                    <p class="text-3xl font-black gradient-text">24/7</p>
+                    <p class="text-gray-400 mt-2">Expert Support</p>
+                </div>
+                <div class="glass p-6 rounded-xl">
+                    <p class="text-3xl font-black gradient-text">30d</p>
+                    <p class="text-gray-400 mt-2">Money Back</p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Support Section -->
-    <section class="py-16 bg-white/[0.02]">
+    <section class="py-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h3 class="text-2xl font-bold mb-4">Need Help?</h3>
-            <p class="text-gray-400 mb-6">Our support team is available 24/7 to assist you with any questions or issues.</p>
-            <a href="mailto:hamishgordon051@gmail.com" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400 font-semibold hover:bg-green-500/20 transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+            <h2 class="text-4xl font-black mb-4">Need Help?</h2>
+            <p class="text-gray-400 mb-8 text-lg">Our expert support team is available 24/7 to assist you with any questions.</p>
+            <a href="mailto:hamishgordon051@gmail.com" class="inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 font-bold hover:bg-green-500/20 transition-all shadow-lg">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                 Contact Support: hamishgordon051@gmail.com
             </a>
         </div>
     </section>
 
+    <!-- Footer -->
     <footer class="py-12 border-t border-white/5 text-center text-gray-500 text-sm">
         <div class="max-w-7xl mx-auto px-4">
-            <p>© 2026 SiteGuardian. All rights reserved. | 30-Day Money-Back Guarantee</p>
+            <p>© 2026 SiteGuardian. All rights reserved. | 30-Day Money-Back Guarantee | <a href="mailto:hamishgordon051@gmail.com" class="text-green-400 hover:text-green-300">Support</a></p>
         </div>
     </footer>
 
@@ -263,18 +451,16 @@
                 </button>
             </div>
 
-            <!-- Email/Password Tab -->
             <div id="emailTab" class="space-y-4">
-                <input id="emailInput" type="email" placeholder="Email address" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-green-500" />
-                <input id="passwordInput" type="password" placeholder="Password" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-green-500" />
+                <input id="emailInput" type="email" placeholder="Email address" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20" />
+                <input id="passwordInput" type="password" placeholder="Password" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20" />
                 <button onclick="signInWithEmail()" class="w-full py-3 rounded-lg gradient-bg text-black font-bold hover:opacity-90 transition-all">Sign In</button>
                 <p class="text-center text-gray-400 text-sm">Don't have an account? <button onclick="toggleSignUp()" class="text-green-400 hover:text-green-300">Sign up</button></p>
             </div>
 
-            <!-- Sign Up Tab -->
             <div id="signUpTab" class="hidden space-y-4">
-                <input id="signUpEmailInput" type="email" placeholder="Email address" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-green-500" />
-                <input id="signUpPasswordInput" type="password" placeholder="Password (min 6 chars)" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-green-500" />
+                <input id="signUpEmailInput" type="email" placeholder="Email address" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20" />
+                <input id="signUpPasswordInput" type="password" placeholder="Password (min 6 chars)" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20" />
                 <button onclick="signUpWithEmail()" class="w-full py-3 rounded-lg gradient-bg text-black font-bold hover:opacity-90 transition-all">Create Account</button>
                 <p class="text-center text-gray-400 text-sm">Already have an account? <button onclick="toggleSignUp()" class="text-green-400 hover:text-green-300">Sign in</button></p>
             </div>
@@ -284,12 +470,10 @@
                 <div class="relative flex justify-center text-sm"><span class="px-2 bg-black text-gray-400">Or continue with</span></div>
             </div>
 
-            <div class="space-y-3">
-                <button onclick="signInWithGoogle()" class="w-full py-3 rounded-lg border border-white/10 font-semibold hover:bg-white/5 transition-colors flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-                    Google
-                </button>
-            </div>
+            <button onclick="signInWithGoogle()" class="w-full py-3 rounded-lg border border-white/10 font-semibold hover:bg-white/5 transition-all flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                Google
+            </button>
         </div>
     </div>
 
@@ -304,65 +488,50 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                <!-- Starter Plan Card -->
                 <div id="starterOption" onclick="selectPlan('starter')" class="p-6 rounded-2xl border border-white/10 cursor-pointer hover:border-green-500/50 transition-all">
                     <h3 class="font-bold text-lg mb-2">Starter</h3>
                     <div class="text-3xl font-bold gradient-text mb-4">£9.99</div>
                     <ul class="space-y-2 mb-6">
                         <li class="text-sm text-gray-300 flex items-center gap-2">
-                            <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                             3 Tests/day
                         </li>
                         <li class="text-sm text-gray-300 flex items-center gap-2">
-                            <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                             Security Analysis
-                        </li>
-                        <li class="text-sm text-gray-300 flex items-center gap-2">
-                            <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                            Email Alerts
                         </li>
                     </ul>
                     <p class="text-xs text-gray-500">30-day money-back guarantee</p>
                 </div>
 
-                <!-- Pro Plan Card -->
                 <div id="proOption" onclick="selectPlan('pro')" class="p-6 rounded-2xl border border-green-500/50 cursor-pointer bg-green-500/5 transition-all">
                     <div class="text-xs font-bold text-green-400 mb-2 uppercase tracking-wider">⭐ Most Popular</div>
                     <h3 class="font-bold text-lg mb-2">Pro</h3>
                     <div class="text-3xl font-bold gradient-text mb-4">£35</div>
                     <ul class="space-y-2 mb-6">
                         <li class="text-sm text-gray-300 flex items-center gap-2">
-                            <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                             15 Tests/day
                         </li>
                         <li class="text-sm text-gray-300 flex items-center gap-2">
-                            <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                             SEO & Security
-                        </li>
-                        <li class="text-sm text-gray-300 flex items-center gap-2">
-                            <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                            Detailed Reports
                         </li>
                     </ul>
                     <p class="text-xs text-gray-500">30-day money-back guarantee</p>
                 </div>
 
-                <!-- Agency Plan Card -->
                 <div id="agencyOption" onclick="selectPlan('agency')" class="p-6 rounded-2xl border border-white/10 cursor-pointer hover:border-green-500/50 transition-all">
                     <h3 class="font-bold text-lg mb-2">Agency</h3>
                     <div class="text-3xl font-bold gradient-text mb-4">£99</div>
                     <ul class="space-y-2 mb-6">
                         <li class="text-sm text-gray-300 flex items-center gap-2">
-                            <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                             55 Tests/day
                         </li>
                         <li class="text-sm text-gray-300 flex items-center gap-2">
-                            <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                             Full Audit
-                        </li>
-                        <li class="text-sm text-gray-300 flex items-center gap-2">
-                            <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                            Priority Support
                         </li>
                     </ul>
                     <p class="text-xs text-gray-500">30-day money-back guarantee</p>

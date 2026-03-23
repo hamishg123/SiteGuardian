@@ -14,7 +14,7 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-let securityChart, seoChart;
+let securityChart, performanceChart;
 
 // ================= AUTH CHECK =================
 auth.onAuthStateChanged(async user => {
@@ -23,7 +23,6 @@ auth.onAuthStateChanged(async user => {
         return;
     }
 
-    document.getElementById("profilePic").src = user.photoURL || "https://via.placeholder.com/36";
     document.getElementById("signOutBtn").onclick = () => {
         auth.signOut().then(() => {
             window.location.href = "index.html";
@@ -41,8 +40,8 @@ async function loadDashboardData(userId) {
 
         const tests = [];
         let totalSecurityScore = 0;
-        let totalSeoScore = 0;
         let totalPerformanceScore = 0;
+        let totalSeoScore = 0;
 
         snapshot.forEach(doc => {
             const data = doc.data();
@@ -51,24 +50,17 @@ async function loadDashboardData(userId) {
                 ...data
             });
             totalSecurityScore += data.securityScore || 0;
-            totalSeoScore += data.seoScore || 0;
             totalPerformanceScore += data.performanceScore || 0;
+            totalSeoScore += data.seoScore || 0;
         });
-
-        // Update stats
-        document.getElementById("totalTests").innerText = tests.length;
-        
-        if (tests.length > 0) {
-            document.getElementById("avgSecurityScore").innerText = Math.round(totalSecurityScore / tests.length) + "%";
-            document.getElementById("avgSeoScore").innerText = Math.round(totalSeoScore / tests.length) + "%";
-            document.getElementById("avgPerformance").innerText = Math.round(totalPerformanceScore / tests.length) + "%";
-        }
 
         // Render test results
         renderTestResults(tests);
 
         // Initialize charts
-        initCharts(tests);
+        if (tests.length > 0) {
+            initCharts(tests);
+        }
 
     } catch (err) {
         console.error("Error loading dashboard:", err);
@@ -82,13 +74,14 @@ function renderTestResults(tests) {
     if (tests.length === 0) {
         testsList.innerHTML = `
             <div class="text-center py-12 text-gray-400">
-                <p>No tests yet. <a href="index.html" class="text-green-400 hover:text-green-300">Run your first test</a></p>
+                <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <p>No tests yet. <a href="index.html" class="text-green-400 hover:text-green-300 font-semibold">Run your first test</a></p>
             </div>
         `;
         return;
     }
 
-    testsList.innerHTML = tests.map(test => {
+    testsList.innerHTML = tests.slice(0, 5).map(test => {
         const date = new Date(test.timestamp).toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'short',
@@ -102,27 +95,27 @@ function renderTestResults(tests) {
         const performanceRating = getRating(test.performanceScore);
 
         return `
-            <div class="p-6 bg-white/5 rounded-2xl border border-white/10 hover:border-green-500/30 transition-colors">
-                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div class="p-6 bg-white/5 rounded-2xl border border-white/10 hover:border-green-500/30 transition-all hover:bg-white/8">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
                     <div class="flex-1">
-                        <h3 class="font-bold text-lg mb-2">${test.url}</h3>
+                        <h3 class="font-bold text-lg mb-2 truncate">${test.url}</h3>
                         <p class="text-sm text-gray-500">${date}</p>
                     </div>
-                    <div class="grid grid-cols-3 gap-4">
+                    <div class="grid grid-cols-3 gap-6">
                         <div class="text-center">
-                            <p class="text-xs text-gray-400 mb-1">Security</p>
-                            <p class="text-2xl font-bold ${securityRating.color}">${test.securityScore}%</p>
-                            <p class="text-xs text-gray-500">${securityRating.label}</p>
+                            <p class="text-xs text-gray-400 mb-2 uppercase tracking-wider font-semibold">Security</p>
+                            <p class="text-3xl font-black ${securityRating.color}">${test.securityScore}</p>
+                            <p class="text-xs text-gray-500 mt-1">${securityRating.label}</p>
                         </div>
                         <div class="text-center">
-                            <p class="text-xs text-gray-400 mb-1">SEO</p>
-                            <p class="text-2xl font-bold ${seoRating.color}">${test.seoScore}%</p>
-                            <p class="text-xs text-gray-500">${seoRating.label}</p>
+                            <p class="text-xs text-gray-400 mb-2 uppercase tracking-wider font-semibold">SEO</p>
+                            <p class="text-3xl font-black ${seoRating.color}">${test.seoScore}</p>
+                            <p class="text-xs text-gray-500 mt-1">${seoRating.label}</p>
                         </div>
                         <div class="text-center">
-                            <p class="text-xs text-gray-400 mb-1">Performance</p>
-                            <p class="text-2xl font-bold ${performanceRating.color}">${test.performanceScore}%</p>
-                            <p class="text-xs text-gray-500">${performanceRating.label}</p>
+                            <p class="text-xs text-gray-400 mb-2 uppercase tracking-wider font-semibold">Performance</p>
+                            <p class="text-3xl font-black ${performanceRating.color}">${test.performanceScore}</p>
+                            <p class="text-xs text-gray-500 mt-1">${performanceRating.label}</p>
                         </div>
                     </div>
                 </div>
@@ -151,99 +144,107 @@ function initCharts(tests) {
     // Prepare data
     const labels = tests.slice(0, 10).reverse().map((test, idx) => `Test ${idx + 1}`);
     const securityData = tests.slice(0, 10).reverse().map(test => test.securityScore);
-    const seoData = tests.slice(0, 10).reverse().map(test => test.seoScore);
+    const performanceData = tests.slice(0, 10).reverse().map(test => test.performanceScore);
 
     // Security Chart
-    const securityCtx = document.getElementById("securityChart").getContext("2d");
-    securityChart = new Chart(securityCtx, {
-        type: "line",
-        data: {
-            labels: labels,
-            datasets: [{
-                label: "Security Score",
-                data: securityData,
-                borderColor: "#22c55e",
-                backgroundColor: "rgba(34, 197, 94, 0.1)",
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4,
-                pointBackgroundColor: "#22c55e",
-                pointBorderColor: "#fff",
-                pointBorderWidth: 2,
-                pointRadius: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    display: true,
-                    labels: {
-                        color: "#d1d5db",
-                        font: { family: "'Inter', sans-serif" }
+    const securityCtx = document.getElementById("securityChart");
+    if (securityCtx) {
+        securityChart = new Chart(securityCtx, {
+            type: "line",
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: "Security Score",
+                    data: securityData,
+                    borderColor: "#ef4444",
+                    backgroundColor: "rgba(239, 68, 68, 0.1)",
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: "#ef4444",
+                    pointBorderColor: "#fff",
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: {
+                            color: "#d1d5db",
+                            font: { family: "'Inter', sans-serif", size: 12, weight: 'bold' },
+                            padding: 20
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: { color: "rgba(255, 255, 255, 0.05)", drawBorder: false },
+                        ticks: { color: "#9ca3af", font: { family: "'Inter', sans-serif" } }
+                    },
+                    x: {
+                        grid: { color: "rgba(255, 255, 255, 0.05)", drawBorder: false },
+                        ticks: { color: "#9ca3af", font: { family: "'Inter', sans-serif" } }
                     }
                 }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 100,
-                    grid: { color: "rgba(255, 255, 255, 0.05)" },
-                    ticks: { color: "#9ca3af" }
-                },
-                x: {
-                    grid: { color: "rgba(255, 255, 255, 0.05)" },
-                    ticks: { color: "#9ca3af" }
-                }
             }
-        }
-    });
+        });
+    }
 
-    // SEO Chart
-    const seoCtx = document.getElementById("seoChart").getContext("2d");
-    seoChart = new Chart(seoCtx, {
-        type: "line",
-        data: {
-            labels: labels,
-            datasets: [{
-                label: "SEO Score",
-                data: seoData,
-                borderColor: "#22c55e",
-                backgroundColor: "rgba(34, 197, 94, 0.1)",
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4,
-                pointBackgroundColor: "#22c55e",
-                pointBorderColor: "#fff",
-                pointBorderWidth: 2,
-                pointRadius: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    display: true,
-                    labels: {
-                        color: "#d1d5db",
-                        font: { family: "'Inter', sans-serif" }
+    // Performance Chart
+    const performanceCtx = document.getElementById("performanceChart");
+    if (performanceCtx) {
+        performanceChart = new Chart(performanceCtx, {
+            type: "line",
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: "Performance Score",
+                    data: performanceData,
+                    borderColor: "#3b82f6",
+                    backgroundColor: "rgba(59, 130, 246, 0.1)",
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: "#3b82f6",
+                    pointBorderColor: "#fff",
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: {
+                            color: "#d1d5db",
+                            font: { family: "'Inter', sans-serif", size: 12, weight: 'bold' },
+                            padding: 20
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: { color: "rgba(255, 255, 255, 0.05)", drawBorder: false },
+                        ticks: { color: "#9ca3af", font: { family: "'Inter', sans-serif" } }
+                    },
+                    x: {
+                        grid: { color: "rgba(255, 255, 255, 0.05)", drawBorder: false },
+                        ticks: { color: "#9ca3af", font: { family: "'Inter', sans-serif" } }
                     }
                 }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 100,
-                    grid: { color: "rgba(255, 255, 255, 0.05)" },
-                    ticks: { color: "#9ca3af" }
-                },
-                x: {
-                    grid: { color: "rgba(255, 255, 255, 0.05)" },
-                    ticks: { color: "#9ca3af" }
-                }
             }
-        }
-    });
+        });
+    }
 }

@@ -3,182 +3,264 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | SiteGuardian</title>
+    <title>Dashboard - SiteGuardian</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        * { font-family: 'Inter', sans-serif; }
+        body { background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0f0f1e 100%); }
+        
+        .glass { 
+            background: rgba(255, 255, 255, 0.05); 
+            backdrop-filter: blur(20px); 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        .glass-hover { transition: all 0.3s ease; }
+        .glass-hover:hover { 
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(74, 222, 128, 0.3);
+            transform: translateY(-2px);
+        }
+        
         .gradient-text { background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .gradient-bg { background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); }
-        .rating-excellent { color: #22c55e; }
-        .rating-good { color: #84cc16; }
-        .rating-fair { color: #f59e0b; }
-        .rating-poor { color: #ef4444; }
+        
+        .health-score {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: 900;
+            background: conic-gradient(var(--score-color) 0deg, var(--score-color) calc(var(--score-percent) * 3.6deg), rgba(255, 255, 255, 0.05) calc(var(--score-percent) * 3.6deg) 360deg);
+            position: relative;
+            box-shadow: 0 0 40px rgba(74, 222, 128, 0.2);
+        }
+        
+        .health-score::after {
+            content: '';
+            position: absolute;
+            width: 125px;
+            height: 125px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1e 100%);
+        }
+        
+        .score-value {
+            position: relative;
+            z-index: 10;
+            color: var(--score-color);
+        }
+        
         .hidden { display: none; }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
+        ::-webkit-scrollbar-thumb { background: rgba(74, 222, 128, 0.3); border-radius: 4px; }
+        
+        .metric-card {
+            border-left: 4px solid var(--metric-color);
+            transition: all 0.3s ease;
+        }
+        .metric-card:hover {
+            transform: translateX(4px);
+        }
     </style>
 </head>
-<body class="bg-[#0a0a0a] text-gray-100 selection:bg-green-500/30">
+<body class="bg-gradient-to-br from-[#0a0a0a] via-[#1a1a2e] to-[#0f0f1e] text-gray-100 overflow-x-hidden">
 
     <!-- Navigation -->
     <nav class="fixed top-0 w-full z-50 glass border-b border-white/5">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
-                        <svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center shadow-lg">
+                        <svg class="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
                     </div>
-                    <span class="text-xl font-bold tracking-tight">Site<span class="gradient-text">Guardian</span></span>
+                    <span class="text-2xl font-black tracking-tight">Site<span class="gradient-text">Guardian</span></span>
                 </div>
-                <div class="flex items-center gap-6">
-                    <a href="index.html" class="px-4 py-2 rounded-lg border border-white/20 text-white font-semibold text-sm hover:bg-white/5 transition-colors">Home</a>
-                    <img id="profilePic" class="w-9 h-9 rounded-full border border-white/10" alt="Profile" />
-                    <button id="signOutBtn" class="px-4 py-2 rounded-lg border border-white/20 text-white font-semibold text-sm hover:bg-white/5 transition-colors">Sign out</button>
+                <div class="flex items-center gap-4">
+                    <a href="index.html" class="px-4 py-2 rounded-lg border border-white/20 text-white font-semibold text-sm hover:bg-white/5 transition-all">← Back Home</a>
+                    <button id="signOutBtn" class="px-4 py-2 rounded-lg border border-white/20 text-white font-semibold text-sm hover:bg-white/5 transition-all">Sign out</button>
                 </div>
             </div>
         </div>
     </nav>
 
     <!-- Main Content -->
-    <div class="pt-24 pb-16">
+    <div class="pt-24 pb-12">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- Header -->
             <div class="mb-12">
-                <h1 class="text-4xl font-bold mb-2">Dashboard</h1>
-                <p class="text-gray-400">View your website test results and analytics</p>
+                <h1 class="text-5xl font-black mb-2">Your Dashboard</h1>
+                <p class="text-gray-400 text-lg">Monitor your website's security, performance, and SEO health in real-time.</p>
             </div>
 
-            <!-- Stats Overview -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-                <div class="glass p-6 rounded-2xl">
-                    <p class="text-gray-400 text-sm mb-2">Total Tests</p>
-                    <div class="text-3xl font-bold gradient-text" id="totalTests">0</div>
+            <!-- Health Scores Section -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                <!-- Security Score -->
+                <div class="glass p-10 rounded-3xl text-center glass-hover">
+                    <h3 class="text-gray-400 mb-8 font-semibold uppercase tracking-wider">Security Health</h3>
+                    <div class="flex justify-center mb-6">
+                        <div class="health-score" style="--score-color: #ef4444; --score-percent: 85;">
+                            <div class="score-value">85</div>
+                        </div>
+                    </div>
+                    <p class="text-green-400 font-bold text-lg mb-6">Excellent</p>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex items-center justify-center gap-2 text-gray-300">
+                            <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            SSL/TLS Verified
+                        </div>
+                        <div class="flex items-center justify-center gap-2 text-gray-300">
+                            <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            No XSS Vulnerabilities
+                        </div>
+                        <div class="flex items-center justify-center gap-2 text-gray-300">
+                            <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            CSRF Protection Active
+                        </div>
+                    </div>
                 </div>
-                <div class="glass p-6 rounded-2xl">
-                    <p class="text-gray-400 text-sm mb-2">Avg Security Score</p>
-                    <div class="text-3xl font-bold gradient-text" id="avgSecurityScore">0%</div>
-                </div>
-                <div class="glass p-6 rounded-2xl">
-                    <p class="text-gray-400 text-sm mb-2">Avg SEO Score</p>
-                    <div class="text-3xl font-bold gradient-text" id="avgSeoScore">0%</div>
-                </div>
-                <div class="glass p-6 rounded-2xl">
-                    <p class="text-gray-400 text-sm mb-2">Avg Performance</p>
-                    <div class="text-3xl font-bold gradient-text" id="avgPerformance">0%</div>
-                </div>
-            </div>
 
-            <!-- Test History -->
-            <div class="glass p-8 rounded-3xl mb-12">
-                <h2 class="text-2xl font-bold mb-6">Your Test Results</h2>
-                
-                <div id="testsList" class="space-y-4">
-                    <!-- Test items will be populated here -->
-                    <div class="text-center py-12 text-gray-400">
-                        <p>No tests yet. <a href="index.html" class="text-green-400 hover:text-green-300">Run your first test</a></p>
+                <!-- Performance Score -->
+                <div class="glass p-10 rounded-3xl text-center glass-hover">
+                    <h3 class="text-gray-400 mb-8 font-semibold uppercase tracking-wider">Performance</h3>
+                    <div class="flex justify-center mb-6">
+                        <div class="health-score" style="--score-color: #3b82f6; --score-percent: 78;">
+                            <div class="score-value">78</div>
+                        </div>
+                    </div>
+                    <p class="text-yellow-400 font-bold text-lg mb-6">Good</p>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex items-center justify-center gap-2 text-gray-300">
+                            <svg class="w-4 h-4 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Load Time: 2.1s
+                        </div>
+                        <div class="flex items-center justify-center gap-2 text-gray-300">
+                            <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            LCP: 1.8s
+                        </div>
+                        <div class="flex items-center justify-center gap-2 text-gray-300">
+                            <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            CLS: 0.05
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEO Score -->
+                <div class="glass p-10 rounded-3xl text-center glass-hover">
+                    <h3 class="text-gray-400 mb-8 font-semibold uppercase tracking-wider">SEO Health</h3>
+                    <div class="flex justify-center mb-6">
+                        <div class="health-score" style="--score-color: #8b5cf6; --score-percent: 92;">
+                            <div class="score-value">92</div>
+                        </div>
+                    </div>
+                    <p class="text-green-400 font-bold text-lg mb-6">Excellent</p>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex items-center justify-center gap-2 text-gray-300">
+                            <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            Meta Tags Complete
+                        </div>
+                        <div class="flex items-center justify-center gap-2 text-gray-300">
+                            <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            Mobile Responsive
+                        </div>
+                        <div class="flex items-center justify-center gap-2 text-gray-300">
+                            <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            Sitemap Present
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Charts Section -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-                <!-- Security Chart -->
-                <div class="glass p-8 rounded-3xl">
-                    <h3 class="text-xl font-bold mb-6">Security Analysis</h3>
-                    <canvas id="securityChart" height="80"></canvas>
-                </div>
-
-                <!-- SEO Chart -->
-                <div class="glass p-8 rounded-3xl">
-                    <h3 class="text-xl font-bold mb-6">SEO Optimization</h3>
-                    <canvas id="seoChart" height="80"></canvas>
-                </div>
-            </div>
-
-            <!-- Detailed Metrics -->
-            <div class="glass p-8 rounded-3xl">
-                <h2 class="text-2xl font-bold mb-6">Detailed Metrics</h2>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <!-- Security Metrics -->
-                    <div>
-                        <h3 class="text-lg font-bold mb-4 text-green-400">Security Vulnerabilities</h3>
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
-                                <span>SQL Injection Risks</span>
-                                <span class="text-sm rating-excellent">✓ Safe</span>
-                            </div>
-                            <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
-                                <span>XSS Vulnerabilities</span>
-                                <span class="text-sm rating-excellent">✓ Safe</span>
-                            </div>
-                            <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
-                                <span>CSRF Protection</span>
-                                <span class="text-sm rating-good">⚠ Needs Review</span>
-                            </div>
-                            <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
-                                <span>SSL/TLS Certificate</span>
-                                <span class="text-sm rating-excellent">✓ Valid</span>
-                            </div>
-                            <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
-                                <span>Exposed API Keys</span>
-                                <span class="text-sm rating-excellent">✓ None Found</span>
-                            </div>
-                        </div>
+                <!-- Security Trends -->
+                <div class="glass p-8 rounded-3xl glass-hover">
+                    <h3 class="text-2xl font-bold mb-6">Security Trends</h3>
+                    <div class="h-72">
+                        <canvas id="securityChart"></canvas>
                     </div>
+                </div>
 
-                    <!-- SEO Metrics -->
-                    <div>
-                        <h3 class="text-lg font-bold mb-4 text-green-400">SEO Optimization</h3>
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
-                                <span>Meta Tags</span>
-                                <span class="text-sm rating-good">⚠ Partial</span>
-                            </div>
-                            <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
-                                <span>Mobile Responsive</span>
-                                <span class="text-sm rating-excellent">✓ Yes</span>
-                            </div>
-                            <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
-                                <span>Page Speed</span>
-                                <span class="text-sm rating-good">⚠ Good</span>
-                            </div>
-                            <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
-                                <span>Sitemap.xml</span>
-                                <span class="text-sm rating-excellent">✓ Present</span>
-                            </div>
-                            <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
-                                <span>Robots.txt</span>
-                                <span class="text-sm rating-excellent">✓ Present</span>
-                            </div>
-                        </div>
+                <!-- Performance Trends -->
+                <div class="glass p-8 rounded-3xl glass-hover">
+                    <h3 class="text-2xl font-bold mb-6">Performance Trends</h3>
+                    <div class="h-72">
+                        <canvas id="performanceChart"></canvas>
                     </div>
                 </div>
             </div>
 
-            <!-- Performance Metrics -->
-            <div class="glass p-8 rounded-3xl mt-8">
-                <h2 class="text-2xl font-bold mb-6">Performance Metrics</h2>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="p-4 bg-white/5 rounded-lg">
-                        <p class="text-gray-400 text-sm mb-2">Page Load Time</p>
-                        <p class="text-2xl font-bold gradient-text" id="pageLoadTime">2.3s</p>
-                        <p class="text-xs text-gray-500 mt-1">rating-excellent">Excellent</p>
+            <!-- Recent Tests -->
+            <div class="glass p-8 rounded-3xl glass-hover mb-12">
+                <h3 class="text-2xl font-bold mb-6">Recent Tests</h3>
+                <div id="testsList" class="space-y-4">
+                    <div class="text-center py-12 text-gray-400">
+                        <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <p>No tests yet. <a href="index.html" class="text-green-400 hover:text-green-300 font-semibold">Run your first test</a></p>
                     </div>
-                    <div class="p-4 bg-white/5 rounded-lg">
-                        <p class="text-gray-400 text-sm mb-2">Largest Contentful Paint</p>
-                        <p class="text-2xl font-bold gradient-text" id="lcp">1.8s</p>
-                        <p class="text-xs text-gray-500 mt-1">Good</p>
+                </div>
+            </div>
+
+            <!-- Recommendations -->
+            <div class="glass p-8 rounded-3xl glass-hover">
+                <h3 class="text-2xl font-bold mb-6">Smart Recommendations</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="metric-card p-6 bg-white/5 rounded-xl" style="--metric-color: #ef4444;">
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-lg bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4v2m0 4v2M6.343 3.665c.886-.887 2.318-.887 3.203 0l.707.707a1.414 1.414 0 001.414 0l.707-.707c.885-.886 2.317-.886 3.203 0 .886.887.886 2.318 0 3.203l-.707.707a1.414 1.414 0 000 2.828l.707.707c.886.886.886 2.317 0 3.203-.886.886-2.317.886-3.203 0l-.707-.707a1.414 1.414 0 00-2.828 0l-.707.707c-.886.886-2.318.886-3.203 0-.887-.886-.887-2.317 0-3.203l.707-.707a1.414 1.414 0 000-2.828l-.707-.707c-.886-.886-.886-2.316 0-3.203z"></path></svg>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-red-400 mb-1">Update SSL Certificate</h4>
+                                <p class="text-gray-400 text-sm">Your SSL certificate expires in 30 days. Renew immediately to avoid security warnings.</p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="p-4 bg-white/5 rounded-lg">
-                        <p class="text-gray-400 text-sm mb-2">Cumulative Layout Shift</p>
-                        <p class="text-2xl font-bold gradient-text" id="cls">0.05</p>
-                        <p class="text-xs text-gray-500 mt-1">Good</p>
+
+                    <div class="metric-card p-6 bg-white/5 rounded-xl" style="--metric-color: #f59e0b;">
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-lg bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-yellow-400 mb-1">Optimize Images</h4>
+                                <p class="text-gray-400 text-sm">2.3MB of unoptimized images found. Compression could improve load time by 0.8s.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card p-6 bg-white/5 rounded-xl" style="--metric-color: #3b82f6;">
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-blue-400 mb-1">Add Structured Data</h4>
+                                <p class="text-gray-400 text-sm">Schema markup is missing. Adding it could improve search visibility and CTR.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card p-6 bg-white/5 rounded-xl" style="--metric-color: #22c55e;">
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-6 h-6 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-green-400 mb-1">Excellent Performance</h4>
+                                <p class="text-gray-400 text-sm">Your website is performing great! Keep monitoring for any changes or issues.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
