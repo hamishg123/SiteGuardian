@@ -318,21 +318,36 @@ testBtn.onclick = async () => {
     resultDisplay.innerText = "🔍 AI Agent is analyzing your site...";
 
     try {
-        // Simulate the test
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        // Call the Python analysis server
+        const response = await fetch('http://localhost:5000/analyze', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ url: url })
+        });
 
-        // Generate random scores for demo
-        const securityScore = Math.floor(Math.random() * 40) + 60; // 60-100
-        const seoScore = Math.floor(Math.random() * 40) + 60; // 60-100
-        const performanceScore = Math.floor(Math.random() * 30) + 70; // 70-100
+        if (!response.ok) {
+            throw new Error('Analysis server error');
+        }
+
+        const result = await response.json();
+
+        if (result.status === 'error') {
+            throw new Error(result.message);
+        }
 
         // Save test result
         await db.collection("users").doc(user.uid).collection("tests").add({
             url: url,
             timestamp: Date.now(),
-            securityScore: securityScore,
-            seoScore: seoScore,
-            performanceScore: performanceScore,
+            securityScore: result.securityScore,
+            seoScore: result.seoScore,
+            performanceScore: result.performanceScore,
+            securityMetrics: result.securityMetrics,
+            seoMetrics: result.seoMetrics,
+            performanceMetrics: result.performanceMetrics,
+            recommendations: result.recommendations,
             status: "completed"
         });
 
@@ -343,16 +358,16 @@ testBtn.onclick = async () => {
         resultDisplay.innerHTML = `
             ✅ Test Complete! 
             <br><br>
-            Security: <span class="gradient-text font-bold">${securityScore}%</span> | 
-            SEO: <span class="gradient-text font-bold">${seoScore}%</span> | 
-            Performance: <span class="gradient-text font-bold">${performanceScore}%</span>
+            Security: <span class="gradient-text font-bold">${result.securityScore}%</span> | 
+            SEO: <span class="gradient-text font-bold">${result.seoScore}%</span> | 
+            Performance: <span class="gradient-text font-bold">${result.performanceScore}%</span>
             <br><br>
             <a href="dashboard.html" class="text-green-400 hover:text-green-300 underline">View detailed report</a>
         `;
         updateCredits();
     } catch (err) {
         console.error(err);
-        resultDisplay.innerText = "❌ Test failed. Please try again later.";
+        resultDisplay.innerText = "❌ Test failed: " + err.message;
     } finally {
         testBtn.disabled = false;
         testBtn.innerText = "Run Free Test";
